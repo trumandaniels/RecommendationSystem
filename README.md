@@ -1,6 +1,7 @@
 # RecommendationSystem
 
 ## Dataset: https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store
+Extract the dataset to a folder named `data` in the root directory. "data/2019-Dec.csv.gz" becomes "data/2019-Dec.csv"
 
 /RecommendationSystem
 |
