@@ -1,1 +1,22 @@
 /data/
+__pycache__/
+*.pyc
+
+# Local-only AI scaffolding
+AGENTS.md
+PLAN.md
+.codex/
+.runtime/
+docs/INDEX.md
+docs/RUNBOOK.md
+docs/PLANS.md
+docs/exec-plans/README.md
+docs/exec-plans/_template.md
+docs/exec-plans/tech-debt-outstanding.md
+docs/exec-plans/tech-debt-completed.md
+docs/exec-plans/active/*.md
+docs/exec-plans/completed/*.md
+scripts/lint_index.py
+scripts/run-harness.mjs
+scripts/runtime-artifacts.mjs
+tests/test_lint_index.py
