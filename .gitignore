@@ -8,6 +8,7 @@ frontend/dist/
 # Local-only AI scaffolding
 AGENTS.md
 PLAN.md
+.agents/
 .codex/
 .codex
 .runtime/

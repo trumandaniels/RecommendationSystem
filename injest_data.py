@@ -1,36 +1,49 @@
 import argparse
+import csv
 import sqlite3
 from pathlib import Path
 
-import pandas as pd
 
 DATA_DIR = Path("data")
-DEFAULT_INPUT_PATH = DATA_DIR / "2019-Oct.csv"
-DEFAULT_DB_PATH = DATA_DIR / "ecommerce.db"
-DEFAULT_CHUNK_SIZE = 100_000
+DEFAULT_SOURCE_DIR = DATA_DIR / "myket-android-application-market-dataset"
+DEFAULT_INTERACTIONS_PATH = DEFAULT_SOURCE_DIR / "myket.csv"
+DEFAULT_APP_INFO_PATH = DEFAULT_SOURCE_DIR / "app_info_sample.csv"
+DEFAULT_CATEGORIES_PATH = DEFAULT_SOURCE_DIR / "categories.csv"
+DEFAULT_DB_PATH = DATA_DIR / "myket.db"
+DEFAULT_BATCH_SIZE = 10_000
 
-RAW_EVENT_COLUMNS = [
-    "event_time",
-    "event_type",
-    "product_id",
-    "category_id",
-    "category_code",
-    "brand",
-    "price",
+INTERACTION_COLUMNS = (
     "user_id",
-    "user_session",
-]
+    "app_name",
+    "timestamp",
+    "state_label",
+    "comma_separated_list_of_features",
+)
+APP_COLUMNS = ("app_name", "installs", "rating", "rating_count", "category_fa", "category_en")
+CATEGORY_COLUMNS = ("category_fa", "category_en")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Ingest a single Kaggle ecommerce CSV into a local SQLite database.",
+        description="Ingest the Myket Android app install dataset into a local SQLite database.",
     )
     parser.add_argument(
-        "--input-path",
+        "--interactions-path",
         type=Path,
-        default=DEFAULT_INPUT_PATH,
-        help=f"Path to a single extracted Kaggle CSV. Default: {DEFAULT_INPUT_PATH}",
+        default=DEFAULT_INTERACTIONS_PATH,
+        help=f"Myket interaction CSV path. Default: {DEFAULT_INTERACTIONS_PATH}",
+    )
+    parser.add_argument(
+        "--app-info-path",
+        type=Path,
+        default=DEFAULT_APP_INFO_PATH,
+        help=f"Myket app metadata CSV path. Default: {DEFAULT_APP_INFO_PATH}",
+    )
+    parser.add_argument(
+        "--categories-path",
+        type=Path,
+        default=DEFAULT_CATEGORIES_PATH,
+        help=f"Myket category CSV path. Default: {DEFAULT_CATEGORIES_PATH}",
     )
     parser.add_argument(
         "--db-path",
@@ -39,16 +52,16 @@ def parse_args() -> argparse.Namespace:
         help=f"SQLite output path. Default: {DEFAULT_DB_PATH}",
     )
     parser.add_argument(
-        "--chunk-size",
+        "--batch-size",
         type=int,
-        default=DEFAULT_CHUNK_SIZE,
-        help=f"Rows to process per chunk. Default: {DEFAULT_CHUNK_SIZE}",
+        default=DEFAULT_BATCH_SIZE,
+        help=f"Rows to insert per batch. Default: {DEFAULT_BATCH_SIZE}",
     )
     parser.add_argument(
-        "--max-chunks",
+        "--max-rows",
         type=int,
         default=None,
-        help="Optional limit for smoke tests.",
+        help="Optional interaction row limit for smoke tests.",
     )
     parser.add_argument(
         "--replace-db",
@@ -57,14 +70,13 @@ def parse_args() -> argparse.Namespace:
     )
 
     args = parser.parse_args()
-    if not args.input_path.exists():
-        raise FileNotFoundError(
-            f"Input CSV not found: {args.input_path}. Extract the Kaggle archive into data/ first.",
-        )
-    if args.chunk_size <= 0:
-        raise ValueError("--chunk-size must be greater than 0.")
-    if args.max_chunks is not None and args.max_chunks <= 0:
-        raise ValueError("--max-chunks must be greater than 0 when provided.")
+    for path in (args.interactions_path, args.app_info_path, args.categories_path):
+        if not path.exists():
+            raise FileNotFoundError(f"Myket input file not found: {path}")
+    if args.batch_size <= 0:
+        raise ValueError("--batch-size must be greater than 0.")
+    if args.max_rows is not None and args.max_rows <= 0:
+        raise ValueError("--max-rows must be greater than 0 when provided.")
     if args.db_path.exists() and not args.replace_db:
         raise FileExistsError(
             f"Database already exists at {args.db_path}. Re-run with --replace-db to rebuild it.",
@@ -81,121 +93,152 @@ def recreate_database(path: Path) -> None:
         path.unlink()
 
 
+def require_header(actual: list[str] | None, expected: tuple[str, ...], path: Path) -> None:
+    if actual != list(expected):
+        raise ValueError(f"Unexpected header in {path}: expected {list(expected)}, got {actual}")
+
+
+def parse_optional_float(raw: str) -> float | None:
+    cleaned = raw.strip()
+    if not cleaned:
+        return None
+    return float(cleaned)
+
+
+def parse_optional_int(raw: str) -> int | None:
+    cleaned = raw.strip()
+    if not cleaned:
+        return None
+    return int(cleaned)
+
+
 def create_tables(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
     cur.execute(
         """
-        CREATE TABLE products (
-            product_id TEXT PRIMARY KEY,
-            category_id TEXT,
-            category_code TEXT,
-            category_main TEXT,
-            category_sub TEXT,
-            category_sub2 TEXT,
-            brand TEXT,
-            price REAL
+        CREATE TABLE apps (
+            app_name TEXT PRIMARY KEY,
+            installs REAL,
+            rating REAL,
+            rating_count INTEGER,
+            category_fa TEXT,
+            category_en TEXT
         );
         """,
     )
     cur.execute(
         """
-        CREATE TABLE events (
-            event_time TEXT NOT NULL,
-            event_type TEXT NOT NULL,
-            product_id TEXT NOT NULL,
-            category_id TEXT,
-            category_code TEXT,
-            brand TEXT,
-            price REAL,
-            user_id TEXT NOT NULL,
-            user_session TEXT
+        CREATE TABLE categories (
+            category_fa TEXT PRIMARY KEY,
+            category_en TEXT NOT NULL
         );
         """,
     )
-    cur.execute("CREATE INDEX idx_events_user_id ON events(user_id);")
-    cur.execute("CREATE INDEX idx_events_product_id ON events(product_id);")
-    cur.execute("CREATE INDEX idx_events_event_time ON events(event_time);")
+    cur.execute(
+        """
+        CREATE TABLE installs (
+            user_id TEXT NOT NULL,
+            app_name TEXT NOT NULL,
+            timestamp REAL NOT NULL,
+            state_label INTEGER NOT NULL
+        );
+        """,
+    )
+    cur.execute("CREATE INDEX idx_installs_user_time ON installs(user_id, timestamp);")
+    cur.execute("CREATE INDEX idx_installs_app_name ON installs(app_name);")
+    cur.execute("CREATE INDEX idx_installs_timestamp ON installs(timestamp);")
     conn.commit()
 
 
-def enrich_categories(chunk: pd.DataFrame) -> pd.DataFrame:
-    enriched = chunk.copy()
-    category_parts = enriched["category_code"].fillna("").str.split(".", n=2, expand=True)
-    enriched["category_main"] = category_parts[0].replace("", pd.NA)
-    enriched["category_sub"] = category_parts[1].replace("", pd.NA)
-    enriched["category_sub2"] = category_parts[2].replace("", pd.NA)
-    return enriched
+def ingest_categories(path: Path, conn: sqlite3.Connection) -> int:
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        require_header(reader.fieldnames, CATEGORY_COLUMNS, path)
+        rows = [(row["category_fa"], row["category_en"]) for row in reader]
+
+    conn.executemany(
+        "INSERT INTO categories (category_fa, category_en) VALUES (?, ?)",
+        rows,
+    )
+    return len(rows)
 
 
-def write_products(chunk: pd.DataFrame, conn: sqlite3.Connection) -> int:
-    product_frame = chunk[
-        [
-            "product_id",
-            "category_id",
-            "category_code",
-            "category_main",
-            "category_sub",
-            "category_sub2",
-            "brand",
-            "price",
-        ]
-    ].drop_duplicates(subset=["product_id"])
-    product_rows = product_frame.where(pd.notna(product_frame), None)
+def ingest_apps(path: Path, conn: sqlite3.Connection) -> int:
+    rows: list[tuple[str, float | None, float | None, int | None, str, str]] = []
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        require_header(reader.fieldnames, APP_COLUMNS, path)
+        for row in reader:
+            rows.append(
+                (
+                    row["app_name"],
+                    parse_optional_float(row["installs"]),
+                    parse_optional_float(row["rating"]),
+                    parse_optional_int(row["rating_count"]),
+                    row["category_fa"],
+                    row["category_en"],
+                ),
+            )
 
     conn.executemany(
         """
-        INSERT OR IGNORE INTO products (
-            product_id,
-            category_id,
-            category_code,
-            category_main,
-            category_sub,
-            category_sub2,
-            brand,
-            price
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO apps (
+            app_name,
+            installs,
+            rating,
+            rating_count,
+            category_fa,
+            category_en
+        ) VALUES (?, ?, ?, ?, ?, ?)
         """,
-        list(product_rows.itertuples(index=False, name=None)),
+        rows,
     )
-    return len(product_rows)
+    return len(rows)
 
 
-def write_events(chunk: pd.DataFrame, conn: sqlite3.Connection) -> int:
-    event_frame = chunk[RAW_EVENT_COLUMNS]
-    event_rows = event_frame.where(pd.notna(event_frame), None)
-    event_rows.to_sql("events", conn, if_exists="append", index=False)
-    return len(event_rows)
+def flush_install_batch(conn: sqlite3.Connection, rows: list[tuple[str, str, float, int]]) -> None:
+    conn.executemany(
+        """
+        INSERT INTO installs (
+            user_id,
+            app_name,
+            timestamp,
+            state_label
+        ) VALUES (?, ?, ?, ?)
+        """,
+        rows,
+    )
 
 
-def ingest_csv(
-    input_path: Path,
-    db_path: Path,
-    chunk_size: int,
-    max_chunks: int | None,
-) -> tuple[int, int, int]:
+def ingest_installs(path: Path, conn: sqlite3.Connection, batch_size: int, max_rows: int | None) -> int:
     rows_written = 0
-    product_rows_seen = 0
-    chunks_processed = 0
+    batch: list[tuple[str, str, float, int]] = []
 
-    with sqlite3.connect(db_path) as conn:
-        create_tables(conn)
-        reader = pd.read_csv(input_path, chunksize=chunk_size, low_memory=False)
-        for chunk in reader:
-            enriched_chunk = enrich_categories(chunk)
-            product_rows_seen += write_products(enriched_chunk, conn)
-            rows_written += write_events(enriched_chunk, conn)
-            conn.commit()
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.reader(handle)
+        header = next(reader, None)
+        require_header(header, INTERACTION_COLUMNS, path)
 
-            chunks_processed += 1
-            print(
-                f"Processed chunk {chunks_processed}: "
-                f"{rows_written:,} events written so far.",
-            )
+        for raw_row in reader:
+            if len(raw_row) < 4:
+                raise ValueError(f"Interaction row has fewer than 4 columns in {path}: {raw_row}")
+            batch.append((raw_row[0], raw_row[1], float(raw_row[2]), int(raw_row[3])))
+            rows_written += 1
 
-            if max_chunks is not None and chunks_processed >= max_chunks:
+            if len(batch) >= batch_size:
+                flush_install_batch(conn, batch)
+                conn.commit()
+                batch.clear()
+                print(f"Inserted {rows_written:,} installs so far.")
+
+            if max_rows is not None and rows_written >= max_rows:
                 break
 
-    return rows_written, product_rows_seen, chunks_processed
+    if batch:
+        flush_install_batch(conn, batch)
+        conn.commit()
+
+    return rows_written
 
 
 def main() -> None:
@@ -203,18 +246,19 @@ def main() -> None:
     ensure_parent_dir(args.db_path)
     recreate_database(args.db_path)
 
-    rows_written, product_rows_seen, chunks_processed = ingest_csv(
-        input_path=args.input_path,
-        db_path=args.db_path,
-        chunk_size=args.chunk_size,
-        max_chunks=args.max_chunks,
-    )
+    with sqlite3.connect(args.db_path) as conn:
+        create_tables(conn)
+        category_count = ingest_categories(args.categories_path, conn)
+        app_count = ingest_apps(args.app_info_path, conn)
+        install_count = ingest_installs(args.interactions_path, conn, args.batch_size, args.max_rows)
 
-    print(f"Input file: {args.input_path}")
+    print(f"Interaction file: {args.interactions_path}")
+    print(f"App metadata file: {args.app_info_path}")
+    print(f"Category file: {args.categories_path}")
     print(f"SQLite database: {args.db_path}")
-    print(f"Chunks processed: {chunks_processed}")
-    print(f"Event rows written: {rows_written:,}")
-    print(f"Distinct product rows attempted: {product_rows_seen:,}")
+    print(f"Categories written: {category_count:,}")
+    print(f"Apps written: {app_count:,}")
+    print(f"Install interactions written: {install_count:,}")
 
 
 if __name__ == "__main__":

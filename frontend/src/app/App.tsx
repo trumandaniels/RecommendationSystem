@@ -1,36 +1,37 @@
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useMemo, useState } from "react";
 import {
-  ArrowRight,
-  Database,
-  History,
-  Network,
-  PlayCircle,
+  BrainCircuit,
+  Check,
+  Download,
+  Gauge,
+  Info,
+  Library,
+  PackageCheck,
+  ShieldCheck,
   Sparkles,
-  Workflow,
+  TrendingUp,
+  Trash2,
+  X,
 } from "lucide-react";
 import {
+  APP_DETAILS,
   DEMO_META,
   HISTORY as HISTORY_SEED,
-  HOW_IT_WORKS_STEPS,
-  MODEL_EXPLANATIONS,
-  PRODUCT_DETAILS,
   RECOMMENDATIONS,
 } from "./demoData.generated";
 
 type ModelId = "popularity" | "item_item";
-type AppTabId = "how_it_works" | "live_demo";
 type TagType = "intent" | "similarity" | "coview" | "category" | "popularity";
+
+type Tag = {
+  label: string;
+  type: TagType;
+};
 
 type Signal = {
   label: string;
   value: number;
   color: string;
-};
-
-type Tag = {
-  label: string;
-  type: TagType;
 };
 
 type RecItem = {
@@ -44,15 +45,7 @@ type RecItem = {
   tags: Tag[];
 };
 
-type SessionItem = {
-  id: string;
-  title: string;
-  category: string;
-  time: string;
-  image: string;
-};
-
-type ProductDetail = {
+type AppDetail = {
   id: string;
   title: string;
   category: string;
@@ -63,640 +56,659 @@ type ProductDetail = {
   facts: Array<{ label: string; value: string }>;
 };
 
-type ModelExplanation = {
-  id: ModelId;
-  title: string;
-  eyebrow: string;
-  summary: string;
-  signals: string[];
+type AppRecord = AppDetail & {
+  recommendation?: RecItem;
 };
 
 function cn(...inputs: Array<string | false | null | undefined>) {
   return inputs.filter(Boolean).join(" ");
 }
 
-function buildSessionTimestamp(index: number) {
-  const minutesSinceNine = 12 + index * 2;
-  const rawHour = 9 + Math.floor(minutesSinceNine / 60);
-  const minute = minutesSinceNine % 60;
-  const meridiem = rawHour >= 12 ? "PM" : "AM";
-  const hour = ((rawHour + 11) % 12) + 1;
-
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${meridiem}`;
-}
-
-const APP_TABS: Array<{ id: AppTabId; label: string }> = [
-  { id: "how_it_works", label: "How this works" },
-  { id: "live_demo", label: "Live Demo" },
-];
-
-const MODEL_TABS: Array<{ id: ModelId; label: string }> = [
-  { id: "popularity", label: "Popularity" },
-  { id: "item_item", label: "Item-Item CF" },
-];
-
+const APP_DETAIL_MAP = APP_DETAILS as Record<string, AppDetail>;
+const RECOMMENDATION_MAP = RECOMMENDATIONS as Record<ModelId, RecItem[]>;
 const TAG_STYLES: Record<TagType, string> = {
-  intent: "border-violet-200 bg-violet-50 text-violet-700",
-  similarity: "border-amber-200 bg-amber-50 text-amber-700",
-  coview: "border-blue-200 bg-blue-50 text-blue-700",
-  category: "border-cyan-200 bg-cyan-50 text-cyan-700",
-  popularity: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  intent: "border-slate-200 bg-slate-50 text-slate-700",
+  similarity: "border-amber-200 bg-amber-50 text-amber-800",
+  coview: "border-blue-200 bg-blue-50 text-blue-800",
+  category: "border-cyan-200 bg-cyan-50 text-cyan-800",
+  popularity: "border-emerald-200 bg-emerald-50 text-emerald-800",
 };
 
-const HISTORY: SessionItem[] = HISTORY_SEED.map((item) => ({ ...item }));
-const PRODUCT_DETAIL_MAP = PRODUCT_DETAILS as Record<string, ProductDetail>;
-const RECOMMENDATION_MAP = RECOMMENDATIONS as Record<ModelId, RecItem[]>;
-const MODEL_EXPLANATION_LIST = MODEL_EXPLANATIONS as ModelExplanation[];
-const HOW_IT_WORKS = HOW_IT_WORKS_STEPS as Array<{ title: string; body: string }>;
+function getFact(app: AppDetail, label: string) {
+  return app.facts.find((fact) => fact.label === label)?.value ?? "Unknown";
+}
 
-function TagBadge({ label, type }: Tag) {
+function buildAppRecords() {
+  const records = new Map<string, AppRecord>();
+  for (const app of Object.values(APP_DETAIL_MAP)) {
+    records.set(app.id, { ...app });
+  }
+  for (const recommendation of Object.values(RECOMMENDATION_MAP).flat()) {
+    const existing = records.get(recommendation.id);
+    if (existing) {
+      records.set(recommendation.id, { ...existing, recommendation });
+    }
+  }
+  return [...records.values()].sort((a, b) => a.title.localeCompare(b.title));
+}
+
+const ALL_APPS = buildAppRecords();
+const POPULAR_APP_IDS = RECOMMENDATION_MAP.popularity.map((item) => item.id);
+const SEEDED_INSTALL_IDS = HISTORY_SEED.map((item) => item.id);
+const DEFAULT_SELECTED_APP_ID = POPULAR_APP_IDS[0] ?? ALL_APPS[0]?.id ?? null;
+const MODE_DETAILS: Record<
+  ModelId,
+  { label: string; shortLabel: string; eyebrow: string; description: string }
+> = {
+  popularity: {
+    label: "Popularity",
+    shortLabel: "Popularity",
+    eyebrow: "Install volume",
+    description: "Ranks apps by total install interactions in the Myket sample.",
+  },
+  item_item: {
+    label: "ML recommendation",
+    shortLabel: "ML",
+    eyebrow: "Co-install graph",
+    description: "Ranks apps by overlap with users who installed the profile's apps.",
+  },
+};
+
+function recommendationForApp(appId: string, modelId: ModelId) {
+  return RECOMMENDATION_MAP[modelId].find((item) => item.id === appId) ?? null;
+}
+
+function installLikelihoodPercent(recommendation: RecItem | null, modelId: ModelId) {
+  if (!recommendation) {
+    return null;
+  }
+
+  const signalValue = (label: string) =>
+    recommendation.signals.find((signal) => signal.label === label)?.value ?? 0;
+
+  if (modelId === "popularity") {
+    return signalValue("Install idx");
+  }
+
+  return Math.round(
+    signalValue("Co-user idx") * 0.55 +
+      signalValue("Seed overlap") * 0.3 +
+      signalValue("Category fit") * 0.15,
+  );
+}
+
+function AppIcon({
+  app,
+  size = "md",
+}: {
+  app: Pick<AppDetail, "image" | "title">;
+  size?: "sm" | "md" | "lg";
+}) {
+  return (
+    <div
+      className={cn(
+        "shrink-0 overflow-hidden rounded-lg border border-white bg-slate-100 shadow-sm",
+        size === "sm" && "h-10 w-10",
+        size === "md" && "h-12 w-12",
+        size === "lg" && "h-20 w-20",
+      )}
+    >
+      <img src={app.image} alt={app.title} className="h-full w-full object-cover" />
+    </div>
+  );
+}
+
+function TagBadge({ tag }: { tag: Tag }) {
   return (
     <span
       className={cn(
-        "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]",
-        TAG_STYLES[type],
+        "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+        TAG_STYLES[tag.type],
       )}
     >
-      {label}
+      {tag.label}
     </span>
   );
 }
 
-function SignalBar({ label, value, color }: Signal) {
+function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="w-24">
-      <div className="mb-1 flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-500">
-        <span>{label}</span>
-        <span>{value}</span>
-      </div>
-      <div className="h-1.5 rounded-full bg-zinc-200">
-        <div className={cn("h-1.5 rounded-full", color)} style={{ width: `${value}%` }} />
-      </div>
+    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 truncate text-sm font-semibold text-slate-950" title={value}>
+        {value}
+      </p>
     </div>
   );
 }
 
-function ProductThumb({
-  image,
-  title,
-  className,
-}: {
-  image: string;
-  title: string;
-  className?: string;
-}) {
-  return (
-    <div className={cn("overflow-hidden rounded-2xl border border-white/70 bg-zinc-100", className)}>
-      <img src={image} alt={title} className="h-full w-full object-cover" />
-    </div>
-  );
-}
-
-function RecommendationRow({
-  item,
-  isFocused,
-  onOpen,
-}: {
-  item: RecItem;
-  isFocused: boolean;
-  onOpen: (productId: string) => void;
-}) {
-  return (
-    <motion.button
-      type="button"
-      layout
-      onDoubleClick={() => onOpen(item.id)}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={{ duration: 0.22 }}
-      className={cn(
-        "flex w-full items-center gap-4 rounded-2xl border bg-white px-4 py-3 text-left shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-colors",
-        isFocused ? "border-indigo-300" : "border-zinc-200 hover:border-zinc-300",
-      )}
-      title={`Double-click to enter ${item.title}`}
-    >
-      <ProductThumb image={item.image} title={item.title} className="h-20 w-20 shrink-0" />
-
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h4 className="text-sm font-semibold tracking-tight text-zinc-950">{item.title}</h4>
-          {item.tags.map((tag) => (
-            <TagBadge key={`${item.id}-${tag.label}`} {...tag} />
-          ))}
-        </div>
-        <p className="mt-2 text-sm leading-6 text-zinc-600">{item.explanation}</p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          {item.signals.map((signal) => (
-            <SignalBar key={`${item.id}-${signal.label}`} {...signal} />
-          ))}
-        </div>
-      </div>
-
-      <div className="shrink-0 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-right">
-        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-          {item.scoreLabel}
-        </div>
-        <div className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">
-          {item.score}
-        </div>
-      </div>
-    </motion.button>
-  );
-}
-
-function ProductSpotlight({
-  detail,
-  modelLabel,
-  historyTime,
-  recommendation,
-}: {
-  detail: ProductDetail;
-  modelLabel: string;
-  historyTime: string;
-  recommendation?: RecItem;
-}) {
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 18, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -12, scale: 0.98 }}
-      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-      className="w-full rounded-[28px] border border-zinc-200 bg-[linear-gradient(140deg,#ffffff_0%,#f8fafc_46%,#eef2ff_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
-    >
-      <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <ProductThumb image={detail.image} title={detail.title} className="h-[220px] w-full" />
-
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em]">
-            <span className="text-indigo-500">Product page</span>
-            <span className="text-zinc-400">Centered at {historyTime}</span>
-            <span className="text-zinc-400">{modelLabel}</span>
-          </div>
-
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">{detail.title}</h2>
-          <p className="mt-1 text-sm font-medium text-zinc-500">{detail.category}</p>
-          <p className="mt-4 text-sm leading-6 text-zinc-700">{detail.subtitle}</p>
-          <p className="mt-3 text-sm leading-6 text-zinc-600">{detail.description}</p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {detail.attributes.map((attribute) => (
-              <span
-                key={attribute}
-                className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-zinc-700"
-              >
-                {attribute}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-                Why it is centered
-              </p>
-              <p className="mt-1 text-sm font-semibold text-zinc-900">
-                {modelLabel} is the active ranking lens
-              </p>
-            </div>
-            {recommendation ? (
-              <div className="text-right">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-                  {recommendation.scoreLabel}
-                </p>
-                <p className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">
-                  {recommendation.score}
-                </p>
-              </div>
-            ) : null}
-          </div>
-
-          {recommendation ? (
-            <>
-              <p className="mt-3 text-sm leading-6 text-zinc-600">{recommendation.explanation}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {recommendation.tags.map((tag) => (
-                  <TagBadge key={`${detail.id}-${tag.label}`} {...tag} />
-                ))}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-3">
-                {recommendation.signals.map((signal) => (
-                  <SignalBar key={`${detail.id}-${signal.label}`} {...signal} />
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="mt-3 text-sm leading-6 text-zinc-600">
-              This product started in the selected purchase session, so it is centered without a
-              recommendation metric on the active tab.
-            </p>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-4 text-white">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
-            Recorded attributes
-          </p>
-          <div className="mt-4 space-y-3">
-            {detail.facts.map((fact) => (
-              <div
-                key={fact.label}
-                className="flex items-center justify-between gap-4 rounded-xl bg-white/5 px-3 py-2.5"
-              >
-                <span className="text-[11px] uppercase tracking-[0.15em] text-white/55">
-                  {fact.label}
-                </span>
-                <span className="text-sm font-semibold text-white">{fact.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function HowItWorksView() {
-  return (
-    <div className="bg-white p-6 md:p-8">
-      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-6 shadow-[0_8px_24px_rgb(0,0,0,0.03)]">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-indigo-500">
-            <Workflow className="h-4 w-4" />
-            Ranking flow
-          </div>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">
-            One real session, two recommendation strategies
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
-            This demo uses a real purchase session and real SQLite-exported catalog metadata to
-            compare purchase-volume popularity against item-item collaborative filtering.
-          </p>
-
-          <div className="mt-6 grid gap-4">
-            {HOW_IT_WORKS.map((step, index) => (
-              <div key={step.title} className="rounded-xl border border-zinc-200 bg-white p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-600">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-zinc-900">{step.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-zinc-600">{step.body}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-[0_8px_24px_rgb(0,0,0,0.03)]">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-zinc-400">
-                Data provenance
-              </p>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">
-                What the demo is grounded in
-              </h2>
-            </div>
-            <Database className="h-5 w-5 text-zinc-300" />
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-              Source snapshot
-            </p>
-            <p className="mt-2 text-sm font-semibold text-zinc-900">{DEMO_META.datasetLabel}</p>
-            <p className="mt-3 text-sm leading-6 text-zinc-600">{DEMO_META.note}</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-zinc-200 bg-white px-3 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-                  Session id
-                </p>
-                <p className="mt-1 text-sm font-semibold text-zinc-900 break-all">
-                  {DEMO_META.sessionId}
-                </p>
-              </div>
-              <div className="rounded-xl border border-zinc-200 bg-white px-3 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-                  Session products
-                </p>
-                <p className="mt-1 text-sm font-semibold text-zinc-900">
-                  {DEMO_META.sessionProductCount}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5 space-y-4">
-            {MODEL_EXPLANATION_LIST.map((model) => (
-              <div key={model.id} className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-400">
-                      {model.eyebrow}
-                    </p>
-                    <h3 className="mt-1 text-sm font-semibold text-zinc-900">{model.title}</h3>
-                  </div>
-                  <ArrowRight className="mt-1 h-4 w-4 text-zinc-300" />
-                </div>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">{model.summary}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {model.signals.map((signal) => (
-                    <span
-                      key={`${model.id}-${signal}`}
-                      className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600"
-                    >
-                      {signal}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function LiveDemoView({
+function ModeSelector({
   activeModel,
-  setActiveModel,
-  history,
-  focusedProductId,
-  enterProductPage,
+  onChange,
 }: {
   activeModel: ModelId;
-  setActiveModel: (model: ModelId) => void;
-  history: SessionItem[];
-  focusedProductId: string | null;
-  enterProductPage: (productId: string) => void;
+  onChange: (modelId: ModelId) => void;
 }) {
-  const currentItems = RECOMMENDATION_MAP[activeModel];
-  const activeModelTab = MODEL_TABS.find((tab) => tab.id === activeModel) ?? MODEL_TABS[0];
-  const focusedDetail = focusedProductId ? PRODUCT_DETAIL_MAP[focusedProductId] : null;
-  const focusedRecommendation =
-    currentItems.find((item) => item.id === focusedProductId) ??
-    Object.values(RECOMMENDATION_MAP)
-      .flat()
-      .find((item) => item.id === focusedProductId);
-  const focusedHistoryItem = focusedProductId
-    ? history.find((item) => item.id === focusedProductId)
-    : undefined;
+  const options: Array<{ id: ModelId; icon: typeof TrendingUp }> = [
+    { id: "popularity", icon: TrendingUp },
+    { id: "item_item", icon: BrainCircuit },
+  ];
 
   return (
-    <>
-      <div className="flex flex-col gap-4 border-b border-zinc-100 bg-zinc-50/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex rounded-lg border border-zinc-200/30 bg-zinc-200/50 p-1 shadow-inner">
-            {MODEL_TABS.map((tab) => {
-              const isActive = activeModel === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveModel(tab.id)}
-                  className={cn(
-                    "relative min-w-[132px] rounded-md px-4 py-1.5 text-[13px] font-semibold transition-colors",
-                    isActive ? "text-zinc-900" : "text-zinc-500 hover:text-zinc-700",
-                  )}
-                >
-                  {isActive ? (
-                    <motion.div
-                      layoutId="activeModelTab"
-                      className="absolute inset-0 -z-10 rounded-md border border-zinc-200/50 bg-white shadow-[0_1px_3px_rgb(0,0,0,0.06)]"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.45 }}
-                    />
-                  ) : null}
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+    <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+      {options.map(({ id, icon: Icon }) => {
+        const isActive = activeModel === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            className={cn(
+              "flex h-9 min-w-0 items-center justify-center gap-2 rounded-md px-2 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900",
+              isActive
+                ? "bg-slate-950 text-white shadow-sm"
+                : "text-slate-600 hover:bg-white hover:text-slate-950",
+            )}
+            title={`Use ${MODE_DETAILS[id].label}`}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{MODE_DETAILS[id].shortLabel}</span>
+            {isActive ? <Check className="h-3.5 w-3.5 shrink-0" /> : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
-          <div className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold text-zinc-500">
-            Session {DEMO_META.sessionId.slice(0, 8)}
+function InstalledPanel({
+  installedApps,
+  selectedAppId,
+  onSelect,
+  onUninstall,
+  onClear,
+}: {
+  installedApps: AppRecord[];
+  selectedAppId: string | null;
+  onSelect: (appId: string) => void;
+  onUninstall: (appId: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <aside className="flex min-h-0 min-w-0 flex-col border-r border-slate-200 bg-white">
+      <div className="border-b border-slate-200 px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              User state
+            </p>
+            <h2 className="mt-1 text-sm font-semibold text-slate-950">Installed apps</h2>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs font-medium tracking-tight text-zinc-500">
-          <Network className="h-4 w-4 text-zinc-400" />
-          Double-click any row to center its product page
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+            <Library className="h-4 w-4" />
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row">
-        <aside className="w-full shrink-0 border-r border-zinc-100 bg-zinc-50/40 p-6 md:w-[330px] md:p-8">
-          <h3 className="flex items-center gap-2.5 text-sm font-bold text-zinc-900">
-            <History className="h-4 w-4 text-zinc-400" />
-            Purchased in this session
-          </h3>
-          <p className="mt-2 text-sm leading-6 text-zinc-500">
-            A real October 2019 purchase session exported from SQLite. Products are labeled from
-            recorded brand, category, price, and product ID fields.
-          </p>
+      <div className="flex-1 overflow-y-auto p-4">
+        {installedApps.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white text-slate-500 shadow-sm">
+              <Download className="h-4 w-4" />
+            </div>
+            <h3 className="mt-4 text-sm font-semibold text-slate-950">Start from a blank slate</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Install any app from the recommendation rail. Until then, popularity mode shows the
+              most installed apps in the Myket sample.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {installedApps.map((app) => (
+              <article
+                key={app.id}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg border bg-white p-2 transition hover:border-slate-300",
+                  selectedAppId === app.id ? "border-slate-900" : "border-slate-200",
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelect(app.id)}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <AppIcon app={app} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-950">{app.title}</p>
+                    <p className="text-xs text-slate-500">{app.category}</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onUninstall(app.id)}
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  title={`Uninstall ${app.title}`}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
 
-          <div className="relative mt-5">
-            <div className="absolute bottom-6 left-[31px] top-6 w-px bg-zinc-200" />
-            <div className="relative z-10 flex flex-col gap-4">
-              {history.map((item) => {
-                const isFocused = item.id === focusedProductId;
-                return (
-                  <button
-                    key={`${item.id}-${item.time}`}
-                    type="button"
-                    onDoubleClick={() => enterProductPage(item.id)}
-                    title={`Double-click to center ${item.title}`}
-                    className={cn(
-                      "flex items-center gap-3.5 rounded-xl border bg-white p-2.5 pr-4 text-left shadow-[0_2px_8px_rgb(0,0,0,0.02)] transition-colors",
-                      isFocused ? "border-indigo-300" : "border-zinc-200/80 hover:border-zinc-300",
-                    )}
-                  >
-                    <ProductThumb image={item.image} title={item.title} className="h-12 w-12 shrink-0 rounded-xl" />
-                    <div className="min-w-0">
-                      <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-                        {item.time}
-                      </div>
-                      <div className="mt-1 text-xs font-semibold leading-tight text-zinc-900">
-                        {item.title}
-                      </div>
-                      <div className="mt-1 text-[10px] font-medium text-zinc-500">
-                        {item.category}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+      <div className="border-t border-slate-200 p-4">
+        <button
+          type="button"
+          onClick={onClear}
+          disabled={installedApps.length === 0}
+          className="flex h-9 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          <Trash2 className="h-4 w-4" />
+          Clear installs
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+function DetailPanel({
+  app,
+  activeModel,
+  isInstalled,
+  onInstall,
+  onUninstall,
+}: {
+  app: AppRecord | null;
+  activeModel: ModelId;
+  isInstalled: boolean;
+  onInstall: () => void;
+  onUninstall: () => void;
+}) {
+  if (!app) {
+    return (
+      <section className="border-b border-slate-200 bg-white p-5">
+        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5">
+          <Info className="h-5 w-5 text-slate-500" />
+          <h2 className="mt-4 text-lg font-semibold text-slate-950">Choose an app</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Open any app to inspect its metadata and install it into the demo user profile.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  const recommendation = recommendationForApp(app.id, activeModel);
+
+  return (
+    <section className="border-b border-slate-200 bg-white p-5">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="flex min-w-0 gap-4">
+          <AppIcon app={app} size="lg" />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
+                App page
+              </span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                {app.category}
+              </span>
+              {isInstalled ? (
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  Installed
+                </span>
+              ) : null}
+            </div>
+            <h1 className="mt-3 truncate text-2xl font-semibold tracking-tight text-slate-950">
+              {app.title}
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{app.subtitle}</p>
+            <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{app.description}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={isInstalled ? onUninstall : onInstall}
+            className={cn(
+              "flex h-11 w-full items-center justify-center gap-2 rounded-md text-sm font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900",
+              isInstalled
+                ? "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+                : "bg-slate-950 text-white hover:bg-slate-800",
+            )}
+          >
+            {isInstalled ? <Trash2 className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+            {isInstalled ? "Uninstall" : "Install"}
+          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <Metric label="Rating" value={app.attributes[2]?.replace(" rating", "") ?? "N/A"} />
+            <Metric label="Sample" value={getFact(app, "Sample installs")} />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric label="Package" value={app.id} />
+        <Metric label="Store installs" value={getFact(app, "Store installs")} />
+        <Metric label="Rating count" value={getFact(app, "Rating count")} />
+        <Metric label="Evidence" value={recommendation?.scoreLabel ?? "Metadata"} />
+      </div>
+    </section>
+  );
+}
+
+function AppInsightPanel({
+  app,
+  activeModel,
+}: {
+  app: AppRecord | null;
+  activeModel: ModelId;
+}) {
+  if (!app) {
+    return null;
+  }
+
+  const recommendation = recommendationForApp(app.id, activeModel);
+  const likelihood = installLikelihoodPercent(recommendation, activeModel);
+
+  return (
+    <section className="p-5">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-slate-500" />
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              App description
+            </p>
+          </div>
+          <h2 className="mt-3 text-lg font-semibold tracking-tight text-slate-950">{app.title}</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{app.description}</p>
+          <p className="mt-4 text-xs leading-5 text-slate-500">
+            The local Myket dataset does not include publisher-written long descriptions, screenshots,
+            or icon URLs, so this section uses the metadata available in the sample.
+          </p>
+        </article>
+
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                Model signal
+              </p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                {MODE_DETAILS[activeModel].shortLabel} likelihood
+              </h2>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+              <Gauge className="h-5 w-5" />
             </div>
           </div>
-        </aside>
 
-        <section className="min-w-0 flex-1 bg-white p-6 md:p-8">
-          <div className="mb-6 flex items-end justify-between gap-4">
-            <div>
-              <h3 className="flex items-center gap-2.5 text-sm font-bold text-zinc-900">
-                <Sparkles className="h-4 w-4 text-indigo-500" />
-                {focusedDetail ? "Centered product page" : "Recommended next"}
-              </h3>
-              <p className="mt-2 text-xs text-zinc-500">
-                {focusedDetail
-                  ? "The selected product is centered with its recorded dataset attributes."
-                  : `Same purchase session, different outputs on the ${activeModelTab.label} tab.`}
+          {likelihood === null ? (
+            <div className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-950">Not ranked in this mode</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Select an app from the recommendation rail to see its normalized recommendation score.
               </p>
             </div>
-            <span className="text-right text-xs font-bold uppercase tracking-[0.18em] text-zinc-400">
-              {focusedDetail ? "Dataset fields + ranking context" : "Top 5 candidates"}
-            </span>
-          </div>
-
-          <AnimatePresence initial={false}>
-            {focusedDetail ? (
-              <div className="mb-6">
-                <ProductSpotlight
-                  key={focusedDetail.id}
-                  detail={focusedDetail}
-                  modelLabel={activeModelTab.label}
-                  historyTime={focusedHistoryItem?.time ?? buildSessionTimestamp(history.length - 1)}
-                  recommendation={focusedRecommendation}
+          ) : (
+            <>
+              <div className="mt-5 flex items-end gap-2">
+                <span className="text-5xl font-semibold tracking-tight text-slate-950">
+                  {likelihood}%
+                </span>
+                <span className="pb-2 text-sm font-semibold text-slate-500">relative score</span>
+              </div>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-slate-950"
+                  style={{ width: `${likelihood}%` }}
                 />
               </div>
-            ) : null}
-          </AnimatePresence>
-
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">
-                {activeModelTab.label}
-              </p>
-              <h4 className="mt-1 text-sm font-semibold text-zinc-900">
-                Real products, real counts, different ranking logic
-              </h4>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <AnimatePresence mode="popLayout">
-              {currentItems.map((item) => (
-                <RecommendationRow
-                  key={`${activeModel}-${item.id}`}
-                  item={item}
-                  isFocused={item.id === focusedProductId}
-                  onOpen={enterProductPage}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-        </section>
+              <p className="mt-4 text-sm leading-6 text-slate-600">{recommendation?.explanation}</p>
+            </>
+          )}
+        </article>
       </div>
-    </>
+    </section>
+  );
+}
+
+function RecommendationPanel({
+  installedCount,
+  activeModel,
+  recommendations,
+  selectedAppId,
+  installedIds,
+  onModeChange,
+  onSelect,
+  onInstall,
+}: {
+  installedCount: number;
+  activeModel: ModelId;
+  recommendations: RecItem[];
+  selectedAppId: string | null;
+  installedIds: Set<string>;
+  onModeChange: (modelId: ModelId) => void;
+  onSelect: (appId: string) => void;
+  onInstall: (appId: string) => void;
+}) {
+  const activeDetails = MODE_DETAILS[activeModel];
+
+  return (
+    <aside className="flex min-h-0 min-w-0 flex-col border-l border-slate-200 bg-white">
+      <div className="border-b border-slate-200 px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              Recommendations
+            </p>
+            <h2 className="mt-1 text-sm font-semibold text-slate-950">{activeDetails.label}</h2>
+          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+            <Sparkles className="h-4 w-4" />
+          </div>
+        </div>
+        <div className="mt-4">
+          <ModeSelector activeModel={activeModel} onChange={onModeChange} />
+        </div>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          {activeDetails.description}
+          {activeModel === "item_item" && installedCount === 0
+            ? " Load a real user to align the profile rail with this precomputed model view."
+            : ""}
+        </p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="space-y-3">
+          {recommendations.map((item, index) => {
+            const app = APP_DETAIL_MAP[item.id];
+            const isInstalled = installedIds.has(item.id);
+            return (
+              <article
+                key={`${item.id}-${index}`}
+                className={cn(
+                  "w-full rounded-lg border bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md",
+                  selectedAppId === item.id ? "border-slate-900" : "border-slate-200",
+                )}
+              >
+                <button type="button" onClick={() => onSelect(item.id)} className="w-full text-left">
+                  <div className="flex gap-3">
+                    <AppIcon app={item} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-sm font-semibold text-slate-950">{item.title}</h3>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {app?.category ?? "Unknown category"}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                          {item.score}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {item.tags.slice(0, 2).map((tag) => (
+                          <TagBadge key={`${item.id}-${tag.label}`} tag={tag} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-500">
+                    {item.explanation}
+                  </p>
+                </button>
+
+                {!isInstalled ? (
+                  <button
+                    type="button"
+                    onClick={() => onInstall(item.id)}
+                    className="mt-3 inline-flex h-8 items-center justify-center gap-2 rounded-md bg-slate-950 px-3 text-xs font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Install
+                  </button>
+                ) : null}
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </aside>
   );
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<AppTabId>("live_demo");
   const [activeModel, setActiveModel] = useState<ModelId>("popularity");
-  const [history, setHistory] = useState<SessionItem[]>(HISTORY.map((item) => ({ ...item })));
-  const [focusedProductId, setFocusedProductId] = useState<string | null>(HISTORY[0]?.id ?? null);
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(DEFAULT_SELECTED_APP_ID);
+  const [installedAppIds, setInstalledAppIds] = useState<string[]>([]);
 
-  function enterProductPage(productId: string) {
-    const detail = PRODUCT_DETAIL_MAP[productId];
-    if (!detail) {
-      return;
+  const installedIdSet = useMemo(() => new Set(installedAppIds), [installedAppIds]);
+  const selectedApp = selectedAppId ? ALL_APPS.find((app) => app.id === selectedAppId) ?? null : null;
+  const installedApps = installedAppIds
+    .map((id) => ALL_APPS.find((app) => app.id === id))
+    .filter((app): app is AppRecord => Boolean(app));
+  const recommendations = RECOMMENDATION_MAP[activeModel]
+    .filter((item) => !installedIdSet.has(item.id))
+    .slice(0, 5);
+
+  function installApp(appId: string) {
+    if (!APP_DETAIL_MAP[appId]) {
+      throw new Error(`Cannot install unknown app: ${appId}`);
     }
+    setSelectedAppId(appId);
+    setInstalledAppIds((current) => (current.includes(appId) ? current : [...current, appId]));
+  }
 
-    setFocusedProductId(productId);
-    setHistory((previous) => {
-      const nextHistory = previous.filter((item) => item.id !== productId);
-      return [
-        ...nextHistory,
-        {
-          id: detail.id,
-          title: detail.title,
-          category: detail.category,
-          image: detail.image,
-          time: buildSessionTimestamp(nextHistory.length),
-        },
-      ];
-    });
+  function uninstallApp(appId: string) {
+    setInstalledAppIds((current) => current.filter((id) => id !== appId));
+  }
+
+  function loadDemoHistory() {
+    setInstalledAppIds([...SEEDED_INSTALL_IDS]);
+    setSelectedAppId(SEEDED_INSTALL_IDS[0] ?? DEFAULT_SELECTED_APP_ID);
+    setActiveModel("item_item");
   }
 
   return (
-    <div className="relative min-h-screen bg-[#F9FAFB] p-4 font-sans md:p-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-indigo-50/70 via-white to-white" />
-
-      <div className="relative z-10 mx-auto flex w-full max-w-[1220px] flex-col overflow-hidden rounded-3xl border border-zinc-200/80 bg-white shadow-[0_16px_48px_rgba(15,23,42,0.08)]">
-        <header className="flex flex-col gap-4 border-b border-zinc-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-zinc-400">
-              Recommendation System
-            </p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">
-              Purchase-volume popularity vs. Item-Item CF
+    <main className="min-h-screen overflow-x-hidden bg-[#f6f7f9] text-slate-950">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Portfolio ML demo
+              </p>
+              <span className="max-w-[180px] truncate rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600 sm:max-w-none">
+                {DEMO_META.datasetLabel}
+              </span>
+            </div>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+              AppGraph Recommender
             </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
-              Dataset-backed demo built from {DEMO_META.datasetLabel}. The UI uses recorded
-              product metadata from SQLite instead of hand-authored mock products.
-            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-semibold text-zinc-500">
-              {DEMO_META.sessionProductCount} session products
-            </div>
-            <div className="flex rounded-lg border border-zinc-200/30 bg-zinc-200/50 p-1 shadow-inner">
-              {APP_TABS.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      "relative min-w-[156px] rounded-md px-4 py-2 text-[13px] font-semibold transition-colors",
-                      isActive ? "text-zinc-900" : "text-zinc-500 hover:text-zinc-700",
-                    )}
-                  >
-                    {isActive ? (
-                      <motion.div
-                        layoutId="activeAppTab"
-                        className="absolute inset-0 -z-10 rounded-md border border-zinc-200/50 bg-white shadow-[0_1px_3px_rgb(0,0,0,0.06)]"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.45 }}
-                      />
-                    ) : null}
-                    <span className="inline-flex items-center gap-2">
-                      {tab.id === "how_it_works" ? (
-                        <Workflow className="h-4 w-4" />
-                      ) : (
-                        <PlayCircle className="h-4 w-4" />
-                      )}
-                      {tab.label}
-                    </span>
-                  </button>
-                );
-              })}
+          <div className="grid gap-2 sm:flex sm:flex-wrap sm:items-center">
+            <button
+              type="button"
+              onClick={loadDemoHistory}
+              className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            >
+              <PackageCheck className="h-4 w-4" />
+              Load real user
+            </button>
+            <div className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-600">
+              <ShieldCheck className="h-4 w-4" />
+              <span className="truncate">Myket install graph</span>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {activeTab === "how_it_works" ? (
-          <HowItWorksView />
-        ) : (
-          <LiveDemoView
+      <div className="mx-auto grid min-h-[calc(100vh-73px)] w-full max-w-[1500px] grid-cols-1 overflow-hidden border-x border-slate-200 bg-white lg:grid-cols-[280px_minmax(0,1fr)_360px]">
+        <InstalledPanel
+          installedApps={installedApps}
+          selectedAppId={selectedAppId}
+          onSelect={setSelectedAppId}
+          onUninstall={uninstallApp}
+          onClear={() => setInstalledAppIds([])}
+        />
+
+        <section className="min-w-0 bg-[#fbfcfd]">
+          <div className="border-b border-slate-200 bg-white p-5">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  App page
+                </p>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
+                  Inspect the selected app
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  Use the right rail to switch ranking modes and install recommended apps into the
+                  profile. The main canvas stays focused on the selected app's available metadata.
+                </p>
+              </div>
+
+              <div className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600">
+                {activeModel === "popularity" ? (
+                  <TrendingUp className="h-4 w-4" />
+                ) : (
+                  <BrainCircuit className="h-4 w-4" />
+                )}
+                <span className="truncate">{MODE_DETAILS[activeModel].label}</span>
+              </div>
+            </div>
+          </div>
+
+          <DetailPanel
+            app={selectedApp}
             activeModel={activeModel}
-            setActiveModel={setActiveModel}
-            history={history}
-            focusedProductId={focusedProductId}
-            enterProductPage={enterProductPage}
+            isInstalled={Boolean(selectedAppId && installedIdSet.has(selectedAppId))}
+            onInstall={() => selectedAppId && installApp(selectedAppId)}
+            onUninstall={() => selectedAppId && uninstallApp(selectedAppId)}
           />
-        )}
+
+          <AppInsightPanel app={selectedApp} activeModel={activeModel} />
+        </section>
+
+        <RecommendationPanel
+          installedCount={installedApps.length}
+          activeModel={activeModel}
+          recommendations={recommendations}
+          selectedAppId={selectedAppId}
+          installedIds={installedIdSet}
+          onModeChange={setActiveModel}
+          onSelect={setSelectedAppId}
+          onInstall={installApp}
+        />
       </div>
-    </div>
+    </main>
   );
 }

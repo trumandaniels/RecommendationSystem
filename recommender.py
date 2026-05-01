@@ -1,51 +1,44 @@
-# Core recommmendation logic for the Recommendation System
+# Recommendation strategy notes for the Myket app-install demo.
 
 """
-Popularity-Based:
+The project now centers on implicit-feedback app recommendations:
 
-Offline: Calculate the most frequently purchased/clicked items from your historical data.
+    Given a user's app install history, recommend the next apps they are likely
+    to install.
 
-Real-time: Simply return the top N items from that pre-computed list. This is your baseline.
+Popularity baseline:
 
-Content-Based Filtering:
+Offline: Count install interactions per app across the Myket sample.
+Inference: Exclude apps already in the user's history and return the top apps by
+sample install count.
 
-Offline: For each item, create a vector representing its content (e.g., using TF-IDF on product descriptions or one-hot encoding of categories).
+Item-item collaborative filtering:
 
-Real-time: Get the content vectors for items in the user's history. Average these vectors to create a "session profile vector." Find the items whose content vectors are most similar (using cosine similarity) to this profile vector.
+Offline or query time: Build app-app similarity from shared installers. Two apps
+are related when many users installed both of them.
+Inference: For a selected user's history, rank candidate apps by the number of
+users who installed both the candidate and one or more seed apps from that
+history.
 
-Collaborative Filtering (Item-Item):
+PyTorch matrix factorization:
 
-Offline: Build an item-item similarity matrix. For any two items, the similarity is how often they were co-purchased or co-rated by the same users.
+Offline: Train user and app embeddings from the implicit user-app interaction
+matrix. The current Myket data shape is already appropriate for this because it
+has user identifiers, app identifiers, and install timestamps.
+Inference: Average the embeddings for apps in the selected user's history, then
+rank unseen apps by cosine similarity or dot product.
 
-Real-time: For the last item the user clicked, look up its most similar items in the matrix and recommend them.
+PyTorch Geometric / graph recommender:
 
-Matrix Factorization (PyTorch):
+Offline: Represent the dataset as a bipartite graph with user nodes, app nodes,
+and timestamped install edges. Train a graph recommender such as LightGCN or a
+related embedding model.
+Inference: Use learned app embeddings, or user/app embeddings when available,
+to rank apps that are close to the selected user's install-history profile.
 
-Offline (train_models.py): Train a classic matrix factorization model (like Funk SVD) on your user-item interaction data. This learns low-dimensional embedding vectors for every user and every item. Save the learned item embeddings.
+Portfolio positioning:
 
-Real-time: You don't have a pre-trained embedding for the new anonymous user. So, you do this:
-
-Get the item embeddings for all items in the user's history.
-
-Average these embeddings to create a "session embedding vector." This vector represents the user's current taste.
-
-Calculate the cosine similarity between this session embedding and all other item embeddings.
-
-Recommend the items with the highest similarity.
-
-Graph Neural Networks (PyTorch Geometric):
-
-Offline (train_models.py): This is your most advanced model.
-
-Represent your entire product catalog and user interactions as a bipartite graph (users and items are nodes, clicks/purchases are edges).
-
-Train a GNN (like LightGCN or GraphSAGE) on this graph. The goal is to learn powerful embeddings for all item nodes that capture not just content but also the structure of user behavior.
-
-Save the learned item embeddings from the GNN.
-
-Real-time: The logic is identical to Matrix Factorization. You average the GNN embeddings of items in the user's history to create a session vector and find the most similar items. The GNN embeddings are often more powerful and lead to better recommendations.
-
-Ensemble:
-
-Real-time: Run several of the above models (e.g., Content-Based, MF, and GNN). Each model produces a list of recommendations with scores. Combine these scores using a weighted average (e.g., final_score = 0.5*gnn_score + 0.3*mf_score + 0.2*content_score) and return the top N items by the final score.
+Popularity and item-item CF make the demo easy to understand immediately. PyG is
+the natural advanced-model path because the source data is already a temporal
+user-app graph.
 """
