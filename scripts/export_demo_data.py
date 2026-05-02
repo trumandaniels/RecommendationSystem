@@ -37,6 +37,45 @@ GRADIENTS = [
     ("#312e81", "#6366f1"),
     ("#3f3f46", "#71717a"),
 ]
+ENGLISH_DESCRIPTION_OVERRIDES = {
+    "ir.tv.off": (
+        "Dataset package from the selected user's install history. Its public store page is no "
+        "longer available, so the demo keeps the interaction record and uses a generated app tile."
+    ),
+    "com.farakav.anten": (
+        "Anten streams Iranian TV channels and major sports matches live on Android."
+    ),
+    "com.incytel.mencherz": (
+        "Mencherz brings the classic board game online with competitive multiplayer matches."
+    ),
+    "com.ParsisGames.AirCombat": (
+        "Air Combat is a modern fighter-jet dogfighting game with online battles and fast aerial action."
+    ),
+    "com.StudioBadbadak.Khastegaran": (
+        "A Persian adventure game built around a chaotic village courtship story, puzzles, and comic situations."
+    ),
+    "com.digikala": (
+        "Digikala is an online shopping app for browsing products, ordering goods, and receiving delivery at home."
+    ),
+    "com.instagram.android": (
+        "Instagram lets people share photos, stories, reels, and messages with friends and communities."
+    ),
+    "ir.resaneh1.iptv": (
+        "Rubika is an Iranian super-app for messaging, media, entertainment, and everyday digital services."
+    ),
+    "com.tencent.ig": (
+        "PUBG Mobile is a battle royale game where players compete online to be the last survivor."
+    ),
+    "com.ForgeGames.SpecialForcesGroup2": (
+        "Special Forces Group 2 is a mobile first-person shooter with counter-terror style multiplayer action."
+    ),
+    "ir.nomogame.ClutchGame": (
+        "Clutch is a Persian racing game with local language menus and competitive driving challenges."
+    ),
+    "ir.medu.shad": (
+        "Shad is Iran's official education platform for virtual classes and school communication."
+    ),
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -476,7 +515,7 @@ def app_image(
     rating: float | None,
     app_store_metadata: AppStoreMetadata,
 ) -> str:
-    if app_name in app_store_metadata and app_store_metadata[app_name]["icon_url"].startswith("data:"):
+    if app_name in app_store_metadata:
         return app_store_metadata[app_name]["icon_url"]
     return build_app_image(app_name, category, rating)
 
@@ -488,6 +527,8 @@ def app_description(
     interaction_count: int,
     app_store_metadata: AppStoreMetadata,
 ) -> str:
+    if app_name in ENGLISH_DESCRIPTION_OVERRIDES:
+        return ENGLISH_DESCRIPTION_OVERRIDES[app_name]
     if app_name in app_store_metadata:
         metadata = app_store_metadata[app_name]
         return metadata.get("long_description", metadata["short_description"])

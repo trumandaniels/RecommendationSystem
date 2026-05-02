@@ -64,21 +64,6 @@ type AppRecord = AppDetail & {
   recommendation?: RecItem;
 };
 
-type AppPresentation = {
-  title: string;
-  category: string;
-  description: string;
-  icon: string;
-  accent: string;
-  rating: number;
-  ratingCount: string;
-  installs: string;
-  developer: string;
-  version: string;
-  size: string;
-  released: string;
-};
-
 function cn(...inputs: Array<string | false | null | undefined>) {
   return inputs.filter(Boolean).join(" ");
 }
@@ -121,194 +106,6 @@ const HEADER_TABS: Array<{
     icon: UserCircle,
   },
 ];
-const SELECTED_PRESENTATION: AppPresentation = {
-  title: "SunsetGlow",
-  category: "Photo Editing",
-  description:
-    "SunsetGlow is a creative photo editor focused on natural light, color warmth, and cinematic finishes. Perfect for golden hour, travel, and lifestyle photography.",
-  icon: "sunset",
-  accent: "from-orange-300 via-rose-400 to-purple-950",
-  rating: 4.6,
-  ratingCount: "1,247",
-  installs: "10K+",
-  developer: "Lumen Labs",
-  version: "2.3.1",
-  size: "78.6 MB",
-  released: "Apr 12, 2024",
-};
-const INSTALLED_PRESENTATIONS: AppPresentation[] = [
-  {
-    title: "Aperture Studio",
-    category: "Photo Editing",
-    description: "Pro camera controls and editing presets.",
-    icon: "lens",
-    accent: "from-slate-950 via-slate-900 to-black",
-    rating: 4.6,
-    ratingCount: "842",
-    installs: "24K+",
-    developer: "Aperture Studio",
-    version: "4.1.0",
-    size: "92 MB",
-    released: "Jan 18, 2024",
-  },
-  {
-    title: "Halcyon Film",
-    category: "Film Emulation",
-    description: "Soft film looks for everyday photography.",
-    icon: "prism",
-    accent: "from-stone-50 via-orange-100 to-stone-200",
-    rating: 4.7,
-    ratingCount: "1,083",
-    installs: "18K+",
-    developer: "Halcyon",
-    version: "1.8.2",
-    size: "64 MB",
-    released: "Feb 2, 2024",
-  },
-  {
-    title: "LumaScape",
-    category: "Photo Editing",
-    description: "Landscape and travel photo enhancer.",
-    icon: "mountain",
-    accent: "from-slate-950 via-zinc-900 to-black",
-    rating: 4.5,
-    ratingCount: "695",
-    installs: "12K+",
-    developer: "LumaScape",
-    version: "3.0.5",
-    size: "71 MB",
-    released: "Mar 1, 2024",
-  },
-  {
-    title: "Blackgrain",
-    category: "B&W Photography",
-    description: "Monochrome contrast and grain controls.",
-    icon: "grain",
-    accent: "from-zinc-950 via-zinc-900 to-black",
-    rating: 4.3,
-    ratingCount: "519",
-    installs: "9K+",
-    developer: "Blackgrain",
-    version: "2.4.0",
-    size: "58 MB",
-    released: "Nov 14, 2023",
-  },
-  {
-    title: "CollagePro",
-    category: "Collage Maker",
-    description: "Clean layout tools for visual stories.",
-    icon: "cube",
-    accent: "from-purple-900 via-fuchsia-700 to-sky-700",
-    rating: 4.4,
-    ratingCount: "734",
-    installs: "15K+",
-    developer: "CollagePro",
-    version: "5.0.1",
-    size: "86 MB",
-    released: "Dec 8, 2023",
-  },
-  {
-    title: "SnapSeedly",
-    category: "Photo Editing",
-    description: "Fast color and texture adjustments.",
-    icon: "leaf",
-    accent: "from-emerald-950 via-green-800 to-black",
-    rating: 4.2,
-    ratingCount: "404",
-    installs: "8K+",
-    developer: "Seedly",
-    version: "1.9.7",
-    size: "43 MB",
-    released: "Oct 21, 2023",
-  },
-  {
-    title: "Vivid Touch",
-    category: "Color Enhancer",
-    description: "Warm color boosts and social export.",
-    icon: "orb",
-    accent: "from-orange-500 via-red-500 to-orange-700",
-    rating: 4.6,
-    ratingCount: "981",
-    installs: "21K+",
-    developer: "Vivid",
-    version: "3.2.4",
-    size: "67 MB",
-    released: "Jan 8, 2024",
-  },
-];
-const RECOMMENDATION_PRESENTATIONS: AppPresentation[] = [
-  {
-    title: "GoldenHour Pro",
-    category: "Photo Editing",
-    description: "Similar users love this",
-    icon: "sun",
-    accent: "from-slate-950 via-slate-900 to-black",
-    rating: 4.9,
-    ratingCount: "2,118",
-    installs: "32K+",
-    developer: "GoldenHour",
-    version: "2.7.0",
-    size: "81 MB",
-    released: "Apr 3, 2024",
-  },
-  {
-    title: "Filmify Classic",
-    category: "Film Emulation",
-    description: "You installed similar",
-    icon: "hex",
-    accent: "from-zinc-950 via-black to-zinc-900",
-    rating: 4.8,
-    ratingCount: "1,524",
-    installs: "27K+",
-    developer: "Filmify",
-    version: "3.1.2",
-    size: "74 MB",
-    released: "Feb 19, 2024",
-  },
-  {
-    title: "ClearView AI",
-    category: "Photo Enhancement",
-    description: "Strong category match",
-    icon: "mountain",
-    accent: "from-teal-500 via-cyan-600 to-slate-900",
-    rating: 4.7,
-    ratingCount: "1,016",
-    installs: "19K+",
-    developer: "ClearView",
-    version: "1.6.8",
-    size: "90 MB",
-    released: "Mar 28, 2024",
-  },
-  {
-    title: "PortraitPop",
-    category: "Portrait Editor",
-    description: "Trending with you",
-    icon: "feather",
-    accent: "from-indigo-950 via-violet-900 to-black",
-    rating: 4.6,
-    ratingCount: "888",
-    installs: "13K+",
-    developer: "PortraitPop",
-    version: "2.2.3",
-    size: "62 MB",
-    released: "Dec 12, 2023",
-  },
-  {
-    title: "MoodBoard Collage",
-    category: "Collage Maker",
-    description: "Popular in your region",
-    icon: "waves",
-    accent: "from-black via-zinc-900 to-black",
-    rating: 4.5,
-    ratingCount: "679",
-    installs: "11K+",
-    developer: "MoodBoard",
-    version: "4.0.0",
-    size: "69 MB",
-    released: "Jan 30, 2024",
-  },
-];
-
 function getFact(app: AppDetail, label: string) {
   return app.facts.find((fact) => fact.label === label)?.value ?? "Unknown";
 }
@@ -402,89 +199,72 @@ function installLikelihoodPercent(recommendation: RecItem | null, modelId: Model
   );
 }
 
+const ICON_FALLBACK_GRADIENTS = [
+  "from-slate-900 via-blue-700 to-cyan-500",
+  "from-teal-900 via-emerald-700 to-lime-500",
+  "from-zinc-900 via-stone-700 to-orange-500",
+  "from-fuchsia-950 via-purple-700 to-rose-500",
+  "from-indigo-950 via-indigo-700 to-sky-500",
+  "from-neutral-900 via-zinc-700 to-slate-500",
+];
+
+function hashText(text: string) {
+  return Array.from(text).reduce((hash, char) => hash + char.charCodeAt(0), 0);
+}
+
+function iconInitials(title: string) {
+  const words = title
+    .replace(/[^A-Za-z0-9 ]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (words.length >= 2) {
+    return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  }
+
+  return (words[0] ?? title).slice(0, 2).toUpperCase();
+}
+
 function AppIcon({
   app,
   size = "md",
-  presentation,
 }: {
   app: Pick<AppDetail, "image" | "title">;
   size?: "sm" | "md" | "lg";
-  presentation?: AppPresentation;
 }) {
-  if (presentation) {
-    return (
-      <div
-        className={cn(
-          "shrink-0 overflow-hidden rounded-xl border border-white shadow-[0_12px_28px_rgba(15,23,42,0.14)]",
-          `bg-gradient-to-br ${presentation.accent}`,
-          size === "sm" && "h-10 w-10",
-          size === "md" && "h-14 w-14",
-          size === "lg" && "h-[11rem] w-[11rem]",
-        )}
-      >
-        <div className="relative h-full w-full">
-          <span className="absolute left-[18%] top-[18%] text-[9px] font-bold uppercase tracking-wide text-white/90">
-            {presentation.title.split(" ")[0]}
-          </span>
-          <span className="absolute left-[18%] top-[34%] text-[7px] font-bold uppercase tracking-wide text-white/80">
-            {presentation.category.split(" ")[0]}
-          </span>
-          {presentation.icon === "sunset" ? (
-            <>
-              <span className="absolute left-[22%] top-[26%] h-[32%] w-[32%] rounded-full bg-white/90" />
-              <span className="absolute bottom-0 left-[-8%] h-[42%] w-[70%] rotate-[-18deg] rounded-[55%] bg-orange-800/70" />
-              <span className="absolute bottom-[-8%] right-[-12%] h-[56%] w-[76%] rotate-[-26deg] rounded-[55%] bg-purple-950/70" />
-            </>
-          ) : presentation.icon === "lens" ? (
-            <span className="absolute left-1/2 top-1/2 h-[58%] w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-full border-[6px] border-white/85 shadow-inner after:absolute after:left-1/2 after:top-1/2 after:h-[34%] after:w-[34%] after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-cyan-400" />
-          ) : presentation.icon === "prism" ? (
-            <span className="absolute left-1/2 top-[22%] h-[52%] w-[52%] -translate-x-1/2 rotate-45 rounded-sm bg-gradient-to-br from-orange-300 to-slate-950" />
-          ) : presentation.icon === "mountain" ? (
-            <>
-              <span className="absolute bottom-[22%] left-[18%] h-[34%] w-[34%] rotate-45 rounded-sm bg-white/85" />
-              <span className="absolute bottom-[18%] right-[18%] h-[42%] w-[42%] rotate-45 rounded-sm bg-cyan-200/80" />
-            </>
-          ) : presentation.icon === "grain" ? (
-            <span className="absolute left-1/2 top-1/2 h-[58%] w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-full border-[10px] border-white/90 border-r-transparent" />
-          ) : presentation.icon === "cube" ? (
-            <span className="absolute left-1/2 top-1/2 h-[48%] w-[48%] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-md border-[7px] border-white/85 bg-fuchsia-300/70" />
-          ) : presentation.icon === "leaf" ? (
-            <span className="absolute left-1/2 top-1/2 h-[62%] w-[38%] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[90%_0_90%_0] bg-lime-300/80" />
-          ) : presentation.icon === "orb" ? (
-            <span className="absolute left-1/2 top-1/2 h-[58%] w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-full border-[10px] border-white/55 bg-white/20" />
-          ) : presentation.icon === "hex" ? (
-            <span className="absolute left-1/2 top-1/2 h-[54%] w-[54%] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-lg bg-gradient-to-tr from-teal-300 via-amber-300 to-purple-500" />
-          ) : presentation.icon === "feather" ? (
-            <span className="absolute left-1/2 top-1/2 h-[70%] w-[26%] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-gradient-to-b from-cyan-300 to-violet-500" />
-          ) : presentation.icon === "waves" ? (
-            <div className="absolute inset-x-[16%] top-[34%] space-y-1.5">
-              <span className="block h-1.5 rounded-full bg-orange-200" />
-              <span className="block h-1.5 rounded-full bg-teal-300" />
-              <span className="block h-1.5 rounded-full bg-rose-400" />
-            </div>
-          ) : (
-            <span className="absolute left-1/2 top-1/2 h-[52%] w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80" />
-          )}
-          {size === "lg" ? (
-            <span className="absolute bottom-[18%] left-[18%] text-[9px] font-bold text-white/90">
-              {presentation.rating.toFixed(2)} rating
-            </span>
-          ) : null}
-        </div>
-      </div>
-    );
-  }
+  const gradient = ICON_FALLBACK_GRADIENTS[hashText(app.title) % ICON_FALLBACK_GRADIENTS.length];
+  const initials = iconInitials(app.title);
 
   return (
     <div
       className={cn(
-        "shrink-0 overflow-hidden rounded-xl border border-white bg-slate-100 shadow-[0_12px_28px_rgba(15,23,42,0.14)]",
+        "relative shrink-0 overflow-hidden rounded-xl border border-white bg-slate-100 shadow-[0_12px_28px_rgba(15,23,42,0.14)]",
         size === "sm" && "h-10 w-10",
         size === "md" && "h-14 w-14",
-        size === "lg" && "h-32 w-32 xl:h-36 xl:w-36",
+        size === "lg" && "h-[11rem] w-[11rem]",
       )}
     >
-      <img src={app.image} alt={app.title} className="h-full w-full object-cover" />
+      <div
+        className={cn(
+          "flex h-full w-full items-center justify-center bg-gradient-to-br text-center font-bold text-white",
+          gradient,
+          size === "sm" && "text-xs",
+          size === "md" && "text-sm",
+          size === "lg" && "text-xl",
+        )}
+        aria-hidden="true"
+      >
+        {initials}
+      </div>
+      <img
+        key={app.image}
+        src={app.image}
+        alt={app.title}
+        className="absolute inset-0 h-full w-full object-cover"
+        onError={(event) => {
+          event.currentTarget.style.display = "none";
+        }}
+      />
     </div>
   );
 }
@@ -626,8 +406,8 @@ function InstalledPanel({
           </div>
         ) : (
           <div className="divide-y divide-[#f0e7df]">
-            {installedApps.map((app, index) => {
-              const presentation = INSTALLED_PRESENTATIONS[index % INSTALLED_PRESENTATIONS.length];
+            {installedApps.map((app) => {
+              const rating = getRating(app);
               return (
                 <article
                   key={app.id}
@@ -644,18 +424,18 @@ function InstalledPanel({
                   onClick={() => onSelect(app.id)}
                   className="flex min-w-0 flex-1 items-center gap-4 text-left"
                 >
-                    <AppIcon app={app} size="md" presentation={presentation} />
+                    <AppIcon app={app} size="md" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-950">
-                        {presentation.title}
+                        {app.title}
                       </p>
-                      <p className="text-xs text-slate-500">{presentation.category}</p>
+                      <p className="text-xs text-slate-500">{app.category}</p>
                       <div className="mt-1 flex items-center gap-1 text-orange-500">
                         {Array.from({ length: 5 }, (_, starIndex) => (
                           <Star key={starIndex} className="h-3 w-3 fill-current stroke-current" />
                         ))}
                         <span className="ml-1 text-xs font-medium text-slate-500">
-                          {presentation.rating.toFixed(1)}
+                          {rating.toFixed(1)}
                         </span>
                       </div>
                     </div>
@@ -664,7 +444,7 @@ function InstalledPanel({
                     type="button"
                     onClick={() => onUninstall(app.id)}
                     className="hidden h-8 shrink-0 items-center justify-center rounded-md border border-[#eadfd5] bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-orange-200 hover:text-orange-700 xl:flex"
-                    title={`Uninstall ${presentation.title}`}
+                    title={`Uninstall ${app.title}`}
                   >
                     Uninstall
                   </button>
@@ -717,32 +497,37 @@ function DetailPanel({
     );
   }
 
-  const rating = SELECTED_PRESENTATION.rating;
-  const [descriptionPreview, descriptionRemainder = ""] =
-    SELECTED_PRESENTATION.description.split(". ");
-  const hasDescriptionRemainder = descriptionRemainder.length > 0;
-  const collapsedDescription = `${descriptionPreview}.`;
-  const expandedDescription = SELECTED_PRESENTATION.description;
+  const rating = getRating(app);
+  const ratingCount = getRatingsCount(app);
+  const storeInstalls = getStoreInstalls(app);
+  const sampleInstalls = getFact(app, "Sample installs");
+  const presentationSource = getFact(app, "Presentation source");
+  const description = app.description.trim();
+  const descriptionParts = description.split(". ");
+  const descriptionPreview = descriptionParts[0] ?? "";
+  const hasDescriptionRemainder = descriptionParts.length > 1;
+  const collapsedDescription = hasDescriptionRemainder ? `${descriptionPreview}.` : description;
+  const expandedDescription = description;
   const metadata = [
-    { label: "Developer", value: SELECTED_PRESENTATION.developer },
-    { label: "Version", value: SELECTED_PRESENTATION.version },
-    { label: "Size", value: SELECTED_PRESENTATION.size },
-    { label: "Released", value: SELECTED_PRESENTATION.released },
-    { label: "Category", value: SELECTED_PRESENTATION.category },
-    { label: "Compatibility", value: "iOS, Android" },
+    { label: "Package", value: app.id },
+    { label: "Category", value: app.category },
+    { label: "Store installs", value: storeInstalls },
+    { label: "Sample installs", value: sampleInstalls },
     { label: "Rating", value: `${rating.toFixed(1)} star` },
-    { label: "Installs", value: `${SELECTED_PRESENTATION.installs} active` },
+    { label: "Rating count", value: ratingCount },
+    { label: "Platform", value: "Android" },
+    { label: "Source", value: presentationSource === "Unknown" ? "Dataset" : presentationSource },
   ];
 
   return (
     <section className="border-b border-[#eee5dc] bg-white px-6 py-4">
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_240px]">
+      <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_240px]">
         <div className="flex min-w-0 flex-col gap-5 sm:flex-row">
-          <AppIcon app={app} size="lg" presentation={SELECTED_PRESENTATION} />
+          <AppIcon app={app} size="lg" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
-                {SELECTED_PRESENTATION.category}
+                {app.category}
               </span>
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
                 App Store
@@ -753,20 +538,20 @@ function DetailPanel({
                 </span>
               ) : null}
             </div>
-            <h1 className="mt-3 max-w-[14rem] truncate text-2xl font-semibold leading-tight tracking-tight text-slate-950">
-              {SELECTED_PRESENTATION.title}
+            <h1 className="mt-3 truncate text-2xl font-semibold leading-tight tracking-tight text-slate-950">
+              {app.title}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <StarRating value={rating} />
               <span className="h-4 w-px bg-slate-200" />
               <span className="text-sm text-slate-500">
-                {rating.toFixed(1)} ({SELECTED_PRESENTATION.ratingCount})
+                {rating.toFixed(1)} ({ratingCount})
               </span>
               <span className="h-4 w-px bg-slate-200" />
-              <span className="text-sm text-slate-500">{SELECTED_PRESENTATION.installs} installs</span>
+              <span className="text-sm text-slate-500">{storeInstalls} installs</span>
             </div>
             <p className="mt-2 line-clamp-1 text-sm leading-6 text-slate-600">
-              Bring warmth and mood to every photo.
+              {description || app.attributes[0]}
             </p>
           </div>
         </div>
@@ -788,15 +573,16 @@ function DetailPanel({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
         {metadata.map((item) => (
           <Metric key={item.label} label={item.label} value={item.value} />
         ))}
       </div>
 
-      <div className="mt-3 rounded-lg border border-[#eee5dc] bg-white/90 px-4 py-2.5 text-sm leading-6 text-slate-600 shadow-[0_10px_28px_rgba(34,25,18,0.04)]">
-        <span>{isDescriptionExpanded ? expandedDescription : collapsedDescription}</span>
-        {hasDescriptionRemainder ? (
+      {description ? (
+        <div className="mt-3 rounded-lg border border-[#eee5dc] bg-white/90 px-4 py-2.5 text-sm leading-6 text-slate-600 shadow-[0_10px_28px_rgba(34,25,18,0.04)]">
+          <span>{isDescriptionExpanded ? expandedDescription : collapsedDescription}</span>
+          {hasDescriptionRemainder ? (
           <button
             type="button"
             aria-expanded={isDescriptionExpanded}
@@ -805,8 +591,9 @@ function DetailPanel({
           >
             {isDescriptionExpanded ? "Show less" : "Read more"}
           </button>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -894,16 +681,9 @@ function AppInsightPanel({
                   <div className="mt-3">
                     <p className="text-sm font-semibold text-slate-950">Key model factors</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {["Similar users", "Photography edits", "Color enhancement", "High engagement"].map(
-                        (label) => (
-                          <span
-                            key={label}
-                            className="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 text-[11px] font-semibold text-orange-700"
-                          >
-                            {label}
-                          </span>
-                        ),
-                      )}
+                      {recommendation.tags.map((tag) => (
+                        <TagBadge key={`${recommendation.id}-${tag.label}`} tag={tag} />
+                      ))}
                     </div>
                   </div>
                 ) : null}
@@ -958,9 +738,9 @@ function RecommendationPanel({
           {recommendations.map((item, index) => {
             const app = APP_DETAIL_MAP[item.id];
             const isInstalled = installedIds.has(item.id);
-            const presentation =
-              RECOMMENDATION_PRESENTATIONS[index % RECOMMENDATION_PRESENTATIONS.length];
-            const displayScore = (0.92 - index * 0.06).toFixed(2);
+            const likelihood = installLikelihoodPercent(item, activeModel);
+            const displayScore = likelihood === null ? item.score : (likelihood / 100).toFixed(2);
+            const category = app?.category ?? item.tags.find((tag) => tag.type === "category")?.label ?? "App";
             return (
               <article
                 key={`${item.id}-${index}`}
@@ -979,15 +759,15 @@ function RecommendationPanel({
                     >
                       {index + 1}
                     </span>
-                    <AppIcon app={item} size="md" presentation={presentation} />
+                    <AppIcon app={app ?? item} size="md" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <h3 className="truncate text-sm font-semibold text-slate-950">
-                            {presentation.title}
+                            {item.title}
                           </h3>
                           <p className="mt-0.5 text-xs text-slate-500">
-                            {presentation.category}
+                            {category}
                           </p>
                         </div>
                         <span className="shrink-0 text-right text-lg font-semibold leading-none text-orange-600">
@@ -998,9 +778,9 @@ function RecommendationPanel({
                         </span>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                          {presentation.description}
-                        </span>
+                        {item.tags.slice(0, 2).map((tag) => (
+                          <TagBadge key={`${item.id}-${tag.label}`} tag={tag} />
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -1437,10 +1217,10 @@ export default function App() {
               <BrainCircuit className="h-7 w-7" />
             </div>
             <div className="min-w-0">
-              <h1 className="max-w-[14rem] truncate text-2xl font-semibold tracking-tight text-slate-950 sm:max-w-none">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
                 AppGraph Recommender
               </h1>
-              <p className="mt-1 max-w-[14rem] truncate text-sm text-slate-500 sm:max-w-none">
+              <p className="mt-1 max-w-[34rem] text-sm leading-5 text-slate-500">
                 App Store · Machine Learning Recommendation System Demo
               </p>
             </div>
