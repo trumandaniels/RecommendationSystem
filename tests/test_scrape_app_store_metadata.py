@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sqlite3
 import sys
 import unittest
 from pathlib import Path
@@ -116,6 +117,46 @@ class ParseMetadataTests(unittest.TestCase):
         packages = scraper.parse_package_inputs(["com.example.one"], packages_file)
 
         self.assertEqual(packages, ["com.example.one", "com.example.two"])
+
+    def test_stores_metadata_and_icon_bytes_in_sqlite(self) -> None:
+        db_path = REPO_ROOT / ".runtime" / "test-app-store-metadata.sqlite"
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        if db_path.exists():
+            db_path.unlink()
+        self.addCleanup(lambda: db_path.exists() and db_path.unlink())
+
+        with sqlite3.connect(db_path) as conn:
+            conn.execute("CREATE TABLE apps (app_name TEXT PRIMARY KEY)")
+
+        metadata = scraper.AppStoreMetadata(
+            package_name="com.example.icon",
+            store="myket",
+            source_url="https://myket.ir/app/com.example.icon",
+            icon_url="https://cdn.example/icon.png",
+            short_description="A real local description.",
+            long_description="A longer local description.",
+        )
+        stored = scraper.StoredAppStoreMetadata(
+            metadata=metadata,
+            icon_content_type="image/png",
+            icon_bytes=b"fake-png-bytes",
+            scraped_at="2026-05-01T00:00:00+00:00",
+        )
+
+        scraper.store_metadata_records(db_path, [stored])
+
+        with sqlite3.connect(db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT * FROM app_store_metadata WHERE app_name = ?",
+                ("com.example.icon",),
+            ).fetchone()
+
+        self.assertIsNotNone(row)
+        self.assertEqual(row["store"], "myket")
+        self.assertEqual(row["icon_content_type"], "image/png")
+        self.assertEqual(row["icon_bytes"], b"fake-png-bytes")
+        self.assertEqual(row["short_description"], "A real local description.")
 
 
 if __name__ == "__main__":

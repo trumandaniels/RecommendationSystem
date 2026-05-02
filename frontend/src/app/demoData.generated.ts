@@ -4,7 +4,8 @@ export const DEMO_META = {
   "datasetLabel": "Myket Android app install interactions",
   "sessionId": "-1003884945",
   "historyAppCount": 6,
-  "note": "This demo uses anonymized user-app install events from Myket. App cards are derived from package name, category, install-count, and rating metadata because the dataset does not include app icons or marketing screenshots."
+  "syntheticPlaceholderAppCount": 1,
+  "note": "This demo uses anonymized user-app install events from Myket. App ranking evidence comes from the local interaction dataset. Public app-store metadata supplies app descriptions where available. Icons are embedded when available; otherwise the demo uses deterministic dataset-backed icon tiles so the presentation remains self-contained."
 } as const;
 
 export const HISTORY = [
@@ -58,8 +59,7 @@ export const APP_DETAILS = {
     "title": "TV OFF",
     "category": "Educational",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%233f3f46%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2371717a%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3ETV%20OFF%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3EEDUCATIONAL%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EOFF%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E2.36%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package ir.tv.off appears in Educational with a 2.36 average rating.",
-    "description": "Myket records this app as Educational. The local interaction sample includes 23 install events for this package, while the app metadata reports approximately 36,000 store installs.",
+    "description": "",
     "attributes": [
       "ir.tv.off",
       "Educational",
@@ -90,8 +90,7 @@ export const APP_DETAILS = {
     "title": "Farakav Anten",
     "category": "Utility",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23581c87%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23c026d3%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3EFARAKAV%20ANTEN%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3EUTILITY%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EANTEN%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.60%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package com.farakav.anten appears in Utility with a 4.60 average rating.",
-    "description": "Myket records this app as Utility. The local interaction sample includes 866 install events for this package, while the app metadata reports approximately 700,000 store installs.",
+    "description": "\u0622\u0646\u062a\u0646 \u0628\u0647 \u0635\u0648\u0631\u062a \u0632\u0646\u062f\u0647 \u0634\u0628\u06a9\u0647 \u0647\u0627\u06cc \u0633\u06cc\u0645\u0627 \u0648 \u0645\u0647\u0645 \u062a\u0631 \u0627\u0632 \u0647\u0645\u0647 \u0645\u0633\u0627\u0628\u0642\u0627\u062a \u0648\u0631\u0632\u0634\u06cc \u0631\u0627 \u0628\u0631\u0627\u06cc \u0634\u0645\u0627 \u0646\u0645\u0627\u06cc\u0634 \u0645\u06cc\u062f\u0647\u062f\u060c \u0646\u0635\u0628 \u0628\u0631\u0627\u06cc \u0627\u0646\u062f\u0631\u0648\u06cc\u062f \u0627\u0632 \u0645\u0627\u06cc\u06a9\u062a.",
     "attributes": [
       "com.farakav.anten",
       "Utility",
@@ -114,6 +113,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "User install 2 of 6"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/com.farakav.anten"
       }
     ]
   },
@@ -122,8 +129,7 @@ export const APP_DETAILS = {
     "title": "Incytel Mencherz",
     "category": "Family",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23164e63%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230891b2%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3EINCYTEL%20MENCHERZ%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3EFAMILY%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EMENCHERZ%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.26%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package com.incytel.mencherz appears in Family with a 4.26 average rating.",
-    "description": "Myket records this app as Family. The local interaction sample includes 1,278 install events for this package, while the app metadata reports approximately 400,000 store installs.",
+    "description": "\u0645\u0646\u0686\u0631\u0632\u060c \u062a\u062c\u0631\u0628\u0647 \u0622\u0646\u0644\u0627\u06cc\u0646 \u0648 \u0647\u06cc\u062c\u0627\u0646\u200c\u0627\u0646\u06af\u06cc\u0632 \u0645\u0646\u0686 \u0627\u0633\u062a. \u0627\u06cc\u0646 \u0628\u0627\u0632\u06cc \u062c\u0630\u0627\u0628 \u0631\u0627 \u0627\u0632 \u0645\u0627\u06cc\u06a9\u062a \u062f\u0627\u0646\u0644\u0648\u062f \u06a9\u0646\u06cc\u062f.",
     "attributes": [
       "com.incytel.mencherz",
       "Family",
@@ -146,6 +152,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "User install 3 of 6"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/com.incytel.mencherz"
       }
     ]
   },
@@ -154,8 +168,7 @@ export const APP_DETAILS = {
     "title": "Parsis Games AIR",
     "category": "Thrilling",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23581c87%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23c026d3%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3EPARSIS%20GAMES%20AIR%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3ETHRILLING%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EAIRCOMBAT%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.70%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package com.ParsisGames.AirCombat appears in Thrilling with a 4.70 average rating.",
-    "description": "Myket records this app as Thrilling. The local interaction sample includes 936 install events for this package, while the app metadata reports approximately 300,000 store installs.",
+    "description": "\u200f\u200f\u200f\u200f\u200f\u200f\u0627\u0648\u062c \u0647\u06cc\u062c\u0627\u0646 \u0648 \u0644\u0630\u062a \u0631\u0627 \u062f\u0631 \u062c\u0646\u06af \u062f\u0627\u06af \u0641\u0627\u06cc\u062a \u0628\u0627 \u062c\u0646\u06af\u0646\u062f\u0647 \u0647\u0627\u06cc \u0645\u062f\u0631\u0646 \u062a\u062c\u0631\u0628\u0647 \u06a9\u0646\u06cc\u062f! \u0646\u0628\u0631\u062f\u0647\u0627\u06cc \u0622\u0646\u0644\u0627\u06cc\u0646 \u0634\u0631\u0648\u0639 \u0634\u062f! \u200f\u200f\u200f\u200f\u200f\u062e\u0644\u0628\u0627\u0646\u0647\u0627\u06cc \u062a\u06a9 \u062e\u0627\u0644 \u0628\u0627 \u062c\u0646\u06af\u062f\u0647 \u0647\u0627\u06cc \u067e\u06cc\u0634\u0631\u0641\u062a\u0647 \u0631\u0627 \u062f\u0631\u2026",
     "attributes": [
       "com.ParsisGames.AirCombat",
       "Thrilling",
@@ -178,6 +191,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "User install 4 of 6"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/com.ParsisGames.AirCombat"
       }
     ]
   },
@@ -186,8 +207,7 @@ export const APP_DETAILS = {
     "title": "Studio Badbadak Khastegaran",
     "category": "Artistic",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23164e63%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%230891b2%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3ESTUDIO%20BADBADAK%20KH%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3EARTISTIC%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EKHASTEGARAN%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.35%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package com.StudioBadbadak.Khastegaran appears in Artistic with a 4.35 average rating.",
-    "description": "Myket records this app as Artistic. The local interaction sample includes 674 install events for this package, while the app metadata reports approximately 200,000 store installs.",
+    "description": "\u200f\u200f\u0642\u0631\u0627\u0631\u0647 \u0628\u0631\u06cc\u0645 \u062e\u0648\u0627\u0633\u062a\u06af\u0627\u0631\u06cc \u062f\u062e\u062a\u0631\u0647 \u06a9\u062f\u062e\u062f\u0627... \u200f\u0627\u0645\u0627 \u0628\u0647 \u062c\u0632 \u062a\u0648 \u06a9\u0644\u06cc \u0622\u062f\u0645\u0627\u06cc \u0628\u062f\u062c\u0646\u0633 \u0648 \u062f\u0632\u062f \u0648 \u06a9\u0644\u0627\u0647 \u0628\u0631\u062f\u0627\u0631\u0645 \u0647\u0633\u062a\u0646 \u06a9\u0647 \u062f\u0627\u0631\u0646 \u0645\u06cc\u0627\u0646 \u062e\u0648\u0627\u0633\u062a\u06af\u0627\u0631\u06cc \u062f\u062e\u062a\u0631\u0647 \u06a9\u062f\u062e\u062f\u0627. \u0639\u062c\u0628 \u062e\u0631 \u062a\u0648 \u062e\u0631\u06cc\u2026",
     "attributes": [
       "com.StudioBadbadak.Khastegaran",
       "Artistic",
@@ -210,6 +230,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "User install 5 of 6"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/com.StudioBadbadak.Khastegaran"
       }
     ]
   },
@@ -218,8 +246,7 @@ export const APP_DETAILS = {
     "title": "Digikala",
     "category": "Shopping",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23581c87%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23c026d3%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3EDIGIKALA%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3ESHOPPING%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EDIGIKALA%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.49%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package com.digikala appears in Shopping with a 4.49 average rating.",
-    "description": "Myket records this app as Shopping. The local interaction sample includes 2,413 install events for this package, while the app metadata reports approximately 2,000,000 store installs.",
+    "description": "\u0628\u0627 \u062f\u06cc\u062c\u06cc\u200c\u06a9\u0627\u0644\u0627 \u0628\u0647 \u0631\u0627\u062d\u062a\u06cc \u0645\u06cc\u200c\u062a\u0648\u0627\u0646\u06cc\u062f \u0645\u062d\u0635\u0648\u0644\u0627\u062a \u0648 \u06a9\u0627\u0644\u0627\u0647\u0627\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a\u06cc \u062e\u0648\u062f \u0631\u0627 \u0628\u0647\u200c\u0635\u0648\u0631\u062a \u0622\u0646\u0644\u0627\u06cc\u0646 \u062e\u0631\u06cc\u062f\u0627\u0631\u06cc \u06a9\u0646\u06cc\u062f \u0648 \u062f\u0631\u0628 \u0645\u0646\u0632\u0644 \u062a\u062d\u0648\u06cc\u0644 \u0628\u06af\u06cc\u0631\u06cc\u062f.",
     "attributes": [
       "com.digikala",
       "Shopping",
@@ -242,6 +269,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "User install 6 of 6"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/com.digikala"
       }
     ]
   },
@@ -250,8 +285,7 @@ export const APP_DETAILS = {
     "title": "Instagram",
     "category": "Social",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%230f172a%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%231d4ed8%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3EINSTAGRAM%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3ESOCIAL%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EANDROID%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.47%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package com.instagram.android appears in Social with a 4.47 average rating.",
-    "description": "Myket records this app as Social. The local interaction sample includes 15,292 install events for this package, while the app metadata reports approximately 11,000,000 store installs.",
+    "description": "Little moments lead to big friendships. Share yours on Instagram.\n\u2014From Meta\nConnect with friends, find other fans, and see what people around you are up to and into. Explore your interests and post what's going on, from your daily moments to life's highlights.\nShare what you\u2019re up to and into on Insta\u00ae.\n- Keep up with friends on the fly with Stories and Notes that disappear after 24 hours.\n- Start group chats and share unfiltered moments with your Close Friends.\n- Share memories from recent events or trips in Feed.\n- Turn your life into a movie and discover short, entertaining videos on Instagram with Reels.\n- Customize your posts with exclusive templates, music, stickers and filters.\nDive into your interests.\n- Watch videos from your favorite Creators and discover new content that\u2019s personalized to your interests.\n- Get inspired by photos and videos from new accounts in Explore.\n- Discover brands and small businesses, and shop products that are relevant to your personal style.\nSome Instagram features may not be available in your country or region.\nTerms and Policies - https://help.instagram.com/581066165581870\nConsumer Health Privacy Policy: https://privacycenter.instagram.com/policies/health\nLearn how we're working to help keep our communities safe across Meta technologies at the Instagram Safety Center: https://about.instagram.com/safety",
     "attributes": [
       "com.instagram.android",
       "Social",
@@ -274,6 +308,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "Recommended candidate"
+      },
+      {
+        "label": "Presentation source",
+        "value": "google-play"
+      },
+      {
+        "label": "Store page",
+        "value": "https://play.google.com/store/apps/details?id=com.instagram.android&hl=en_US"
       }
     ]
   },
@@ -282,8 +324,7 @@ export const APP_DETAILS = {
     "title": "Resaneh 1 Iptv",
     "category": "Entertainment",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%233f3f46%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2371717a%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3ERESANEH%201%20IPTV%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3EENTERTAINMENT%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EIPTV%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.08%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package ir.resaneh1.iptv appears in Entertainment with a 4.08 average rating.",
-    "description": "Myket records this app as Entertainment. The local interaction sample includes 12,143 install events for this package, while the app metadata reports approximately 3,000,000 store installs.",
+    "description": "\u0631\u0648\u0628\u06cc\u06a9\u0627 \u06cc\u06a9 \u0627\u067e\u0644\u06cc\u06a9\u06cc\u0634\u0646 \u0627\u06cc\u0631\u0627\u0646\u06cc \u067e\u0631 \u06a9\u0627\u0631\u0628\u0631\u062f \u062f\u0631 \u062a\u0645\u0627\u0645\u06cc \u0632\u0645\u06cc\u0646\u0647\u200c\u0647\u0627 \u0628\u0648\u062f\u0647 \u06a9\u0647 \u0627\u06af\u0631 \u0628\u0647 \u062f\u0646\u0628\u0627\u0644 \u0631\u0641\u0639 \u0646\u06cc\u0627\u0632\u0647\u0627\u06cc \u062e\u0648\u062f \u0628\u0627\u0634\u06cc\u062f \u0645\u06cc\u200c\u062a\u0648\u0627\u0646\u06cc\u062f \u062c\u062f\u06cc\u062f\u062a\u0631\u06cc\u0646 \u0646\u0633\u062e\u0647 \u0627\u06cc\u0646 \u0628\u0631\u0646\u0627\u0645\u0647 \u0631\u0627 \u0627\u0632 \u0645\u0627\u06cc\u06a9\u062a \u062f\u0627\u0646\u0644\u0648\u062f \u06a9\u0646\u06cc\u062f.",
     "attributes": [
       "ir.resaneh1.iptv",
       "Entertainment",
@@ -306,6 +347,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "Recommended candidate"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/ir.resaneh1.iptv"
       }
     ]
   },
@@ -314,8 +363,7 @@ export const APP_DETAILS = {
     "title": "Tencent IG",
     "category": "Thrilling",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%230f172a%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%231d4ed8%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3ETENCENT%20IG%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3ETHRILLING%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EIG%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.51%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package com.tencent.ig appears in Thrilling with a 4.51 average rating.",
-    "description": "Myket records this app as Thrilling. The local interaction sample includes 7,919 install events for this package, while the app metadata reports approximately 3,000,000 store installs.",
+    "description": "\u062f\u0631 \u0628\u0627\u0632\u06cc \u067e\u0627\u0628\u062c\u06cc \u0645\u0648\u0628\u0627\u06cc\u0644 \u06a9\u0647 \u062f\u0631 \u0633\u0628\u06a9 \u0628\u062a\u0644 \u0631\u0648\u06cc\u0627\u0644 \u0627\u0633\u062a\u060c \u0634\u0645\u0627 \u0628\u0627\u06cc\u062f \u0628\u0627 \u062f\u06cc\u06af\u0631 \u0628\u0627\u0632\u06cc\u06a9\u0646\u0627\u0646 \u0628\u0647 \u0635\u0648\u0631\u062a \u0622\u0646\u0644\u0627\u06cc\u0646 \u0631\u0642\u0627\u0628\u062a \u06a9\u0646\u06cc\u062f \u0648 \u062f\u0631 \u0646\u0647\u0627\u06cc\u062a \u0622\u062e\u0631\u06cc\u0646 \u06a9\u0633\u06cc \u0628\u0627\u0634\u06cc\u062f \u06a9\u0647 \u0632\u0646\u062f\u0647 \u0645\u06cc\u200c\u0645\u0627\u0646\u062f!",
     "attributes": [
       "com.tencent.ig",
       "Thrilling",
@@ -338,6 +386,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "Recommended candidate"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/com.tencent.ig"
       }
     ]
   },
@@ -346,8 +402,7 @@ export const APP_DETAILS = {
     "title": "Forge Games Special",
     "category": "Thrilling",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%237c2d12%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23ea580c%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3EFORGE%20GAMES%20SPECIA%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3ETHRILLING%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3ESPECIALFORCESGROUP2%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.47%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package com.ForgeGames.SpecialForcesGroup2 appears in Thrilling with a 4.47 average rating.",
-    "description": "Myket records this app as Thrilling. The local interaction sample includes 7,797 install events for this package, while the app metadata reports approximately 3,000,000 store installs.",
+    "description": "\u062f\u0627\u0646\u0644\u0648\u062f \u0628\u0627\u0632\u06cc \u0645\u0648\u0628\u0627\u06cc\u0644\u06cc \u0646\u06cc\u0631\u0648\u0647\u0627\u06cc \u0648\u06cc\u0698\u0647 \u06f2 \u06a9\u0647 \u0628\u0627 \u0646\u0627\u0645 \u06a9\u0627\u0646\u062a\u0631 \u06f2 \u0646\u06cc\u0632 \u0634\u0646\u0627\u062e\u062a\u0647 \u0645\u06cc\u200c\u0634\u0648\u062f \u0648 \u06cc\u06a9\u06cc \u0627\u0632 \u0645\u062d\u0628\u0648\u0628\u200c\u062a\u0631\u06cc\u0646 \u0628\u0627\u0632\u06cc\u200c\u0647\u0627\u06cc \u0634\u0648\u062a\u0631 \u0627\u0648\u0644 \u0634\u062e\u0635 \u0628\u0631\u0627\u06cc \u06af\u0648\u0634\u06cc\u200c\u0647\u0627\u06cc \u0627\u0646\u062f\u0631\u0648\u06cc\u062f\u06cc \u0627\u0633\u062a.",
     "attributes": [
       "com.ForgeGames.SpecialForcesGroup2",
       "Thrilling",
@@ -370,6 +425,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "Recommended candidate"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/com.ForgeGames.SpecialForcesGroup2"
       }
     ]
   },
@@ -378,8 +441,7 @@ export const APP_DETAILS = {
     "title": "Nomogame Clutch Game",
     "category": "Driving",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%2314532d%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2316a34a%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3ENOMOGAME%20CLUTCH%20GA%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3EDRIVING%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3ECLUTCHGAME%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E4.57%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package ir.nomogame.ClutchGame appears in Driving with a 4.57 average rating.",
-    "description": "Myket records this app as Driving. The local interaction sample includes 6,193 install events for this package, while the app metadata reports approximately 2,000,000 store installs.",
+    "description": "\u0628\u0627\u0632\u06cc \u06a9\u0644\u0627\u0686 \u062c\u062f\u06cc\u062f \u06a9\u0647 \u06cc\u06a9 \u0639\u0646\u0648\u0627\u0646 \u0631\u06cc\u0633\u06cc\u0646\u06af \u0628\u0647 \u0632\u0628\u0627\u0646 \u0641\u0627\u0631\u0633\u06cc \u0627\u0633\u062a \u0631\u0627 \u0627\u0632 \u0645\u0627\u06cc\u06a9\u062a \u062f\u0627\u0646\u0644\u0648\u062f \u06a9\u0646\u06cc\u062f",
     "attributes": [
       "ir.nomogame.ClutchGame",
       "Driving",
@@ -402,6 +464,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "Recommended candidate"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/ir.nomogame.ClutchGame"
       }
     ]
   },
@@ -410,8 +480,7 @@ export const APP_DETAILS = {
     "title": "Medu Shad",
     "category": "Educational",
     "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22320%22%20height%3D%22320%22%20viewBox%3D%220%200%20320%20320%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%25%22%20y1%3D%220%25%22%20x2%3D%22100%25%22%20y2%3D%22100%25%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%233f3f46%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2371717a%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%22320%22%20height%3D%22320%22%20rx%3D%2232%22%20fill%3D%22url%28%23g%29%22%20/%3E%0A%20%20%3Crect%20x%3D%2220%22%20y%3D%2220%22%20width%3D%22280%22%20height%3D%22280%22%20rx%3D%2224%22%20fill%3D%22rgba%28255%2C255%2C255%2C0.08%29%22%20stroke%3D%22rgba%28255%2C255%2C255%2C0.18%29%22%20/%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%2292%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23f8fafc%22%3EMEDU%20SHAD%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22128%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23e2e8f0%22%3EEDUCATIONAL%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22220%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3ESHAD%3C/text%3E%0A%20%20%3Ctext%20x%3D%2236%22%20y%3D%22258%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20font-weight%3D%22600%22%20fill%3D%22%23dbeafe%22%3E2.17%20rating%3C/text%3E%0A%3C/svg%3E",
-    "subtitle": "Package ir.medu.shad appears in Educational with a 2.17 average rating.",
-    "description": "Myket records this app as Educational. The local interaction sample includes 4,673 install events for this package, while the app metadata reports approximately 3,000,000 store installs.",
+    "description": "\u0628\u0627 \u062f\u0627\u0646\u0644\u0648\u062f \u0627\u067e\u0644\u06cc\u06a9\u06cc\u0634\u0646 \u0634\u0627\u062f \u0627\u0632 \u0645\u0627\u06cc\u06a9\u062a\u060c \u0628\u0647 \u067e\u0644\u062a\u0641\u0631\u0645 \u0631\u0633\u0645\u06cc \u0622\u0645\u0648\u0632\u0634 \u0648 \u067e\u0631\u0648\u0631\u0634 \u0628\u0631\u0627\u06cc \u0622\u0645\u0648\u0632\u0634 \u0645\u062c\u0627\u0632\u06cc \u062f\u0633\u062a\u0631\u0633\u06cc \u067e\u06cc\u062f\u0627 \u06a9\u0646\u06cc\u062f.",
     "attributes": [
       "ir.medu.shad",
       "Educational",
@@ -434,6 +503,14 @@ export const APP_DETAILS = {
       {
         "label": "History role",
         "value": "Recommended candidate"
+      },
+      {
+        "label": "Presentation source",
+        "value": "myket"
+      },
+      {
+        "label": "Store page",
+        "value": "https://myket.ir/app/ir.medu.shad"
       }
     ]
   }

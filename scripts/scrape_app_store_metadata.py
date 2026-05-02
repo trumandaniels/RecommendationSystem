@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import html
 import json
+import re
+import sqlite3
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
@@ -14,6 +18,7 @@ from urllib.request import Request, urlopen
 
 
 DEFAULT_OUTPUT_PATH = Path(".runtime/app-store-metadata.json")
+DEFAULT_DB_PATH = Path("data/myket.db")
 DEFAULT_TIMEOUT_SECONDS = 20
 DEFAULT_DELAY_SECONDS = 0.75
 DEFAULT_USER_AGENT = (
@@ -35,6 +40,15 @@ class AppStoreMetadata:
     source_url: str
     icon_url: str
     short_description: str
+    long_description: str | None = None
+
+
+@dataclass(frozen=True)
+class StoredAppStoreMetadata:
+    metadata: AppStoreMetadata
+    icon_content_type: str
+    icon_bytes: bytes
+    scraped_at: str
 
 
 class HeadMetadataParser(HTMLParser):
@@ -70,6 +84,32 @@ class HeadMetadataParser(HTMLParser):
             self._json_ld_parts = []
 
 
+class FragmentTextParser(HTMLParser):
+    BLOCK_TAGS = {"br", "div", "h1", "h2", "h3", "li", "p", "ul"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() == "br":
+            self.parts.append("\n")
+        elif tag.lower() == "li":
+            self.parts.append("\n- ")
+
+    def handle_data(self, data: str) -> None:
+        text = data.strip()
+        if text:
+            self.parts.append(text)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in self.BLOCK_TAGS:
+            self.parts.append("\n")
+
+    def text(self) -> str:
+        return clean_long_text(" ".join(self.parts))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Scrape app icon URLs and short descriptions from public app-store pages.",
@@ -97,6 +137,14 @@ def parse_args() -> argparse.Namespace:
         help=f"JSON output path. Default: {DEFAULT_OUTPUT_PATH}",
     )
     parser.add_argument(
+        "--db-path",
+        type=Path,
+        help=(
+            "Optional SQLite database path for storing scraped metadata and icon bytes. "
+            f"Use {DEFAULT_DB_PATH} for the local Myket demo database."
+        ),
+    )
+    parser.add_argument(
         "--delay-seconds",
         type=float,
         default=DEFAULT_DELAY_SECONDS,
@@ -113,12 +161,19 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_USER_AGENT,
         help="HTTP User-Agent header for store requests.",
     )
+    parser.add_argument(
+        "--embed-icons",
+        action="store_true",
+        help="Download each icon and replace icon_url with a data URL in the output JSON.",
+    )
     args = parser.parse_args()
 
     if args.delay_seconds < 0:
         raise ValueError("--delay-seconds must be non-negative.")
     if args.timeout_seconds <= 0:
         raise ValueError("--timeout-seconds must be greater than zero.")
+    if args.db_path is not None and not args.db_path.exists():
+        raise FileNotFoundError(f"SQLite database not found: {args.db_path}")
 
     packages = parse_package_inputs(args.packages, args.packages_file)
     if not packages:
@@ -181,6 +236,114 @@ def fetch_html(source_url: str, timeout_seconds: float, user_agent: str) -> str:
         raise AppStoreScrapeError(f"Timed out while fetching {source_url}") from exc
 
 
+def fetch_bytes(source_url: str, timeout_seconds: float, user_agent: str) -> tuple[bytes, str]:
+    request = Request(
+        source_url,
+        headers={
+            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+            "User-Agent": user_agent,
+        },
+    )
+    try:
+        with urlopen(request, timeout=timeout_seconds) as response:
+            content_type = response.headers.get_content_type() or "application/octet-stream"
+            return response.read(), content_type
+    except HTTPError as exc:
+        raise AppStoreScrapeError(f"HTTP {exc.code} while fetching icon {source_url}") from exc
+    except URLError as exc:
+        raise AppStoreScrapeError(f"Network error while fetching icon {source_url}: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise AppStoreScrapeError(f"Timed out while fetching icon {source_url}") from exc
+
+
+def embed_icon(record: AppStoreMetadata, timeout_seconds: float, user_agent: str) -> AppStoreMetadata:
+    icon_bytes, content_type = fetch_bytes(record.icon_url, timeout_seconds, user_agent)
+    if not icon_bytes:
+        raise AppStoreScrapeError(f"Icon response was empty for {record.package_name}.")
+    encoded_icon = base64.b64encode(icon_bytes).decode("ascii")
+    return replace(record, icon_url=f"data:{content_type};base64,{encoded_icon}")
+
+
+def build_stored_metadata(
+    record: AppStoreMetadata,
+    timeout_seconds: float,
+    user_agent: str,
+    scraped_at: str,
+) -> StoredAppStoreMetadata:
+    icon_bytes, content_type = fetch_bytes(record.icon_url, timeout_seconds, user_agent)
+    if not icon_bytes:
+        raise AppStoreScrapeError(f"Icon response was empty for {record.package_name}.")
+    return StoredAppStoreMetadata(
+        metadata=record,
+        icon_content_type=content_type,
+        icon_bytes=icon_bytes,
+        scraped_at=scraped_at,
+    )
+
+
+def ensure_app_store_metadata_table(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS app_store_metadata (
+            app_name TEXT PRIMARY KEY,
+            store TEXT NOT NULL,
+            source_url TEXT NOT NULL,
+            icon_url TEXT NOT NULL,
+            icon_content_type TEXT NOT NULL,
+            icon_bytes BLOB NOT NULL,
+            short_description TEXT NOT NULL,
+            long_description TEXT,
+            scraped_at TEXT NOT NULL
+        );
+        """,
+    )
+    conn.commit()
+
+
+def store_metadata_records(db_path: Path, records: list[StoredAppStoreMetadata]) -> None:
+    with sqlite3.connect(db_path) as conn:
+        ensure_app_store_metadata_table(conn)
+        conn.executemany(
+            """
+            INSERT INTO app_store_metadata (
+                app_name,
+                store,
+                source_url,
+                icon_url,
+                icon_content_type,
+                icon_bytes,
+                short_description,
+                long_description,
+                scraped_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(app_name) DO UPDATE SET
+                store = excluded.store,
+                source_url = excluded.source_url,
+                icon_url = excluded.icon_url,
+                icon_content_type = excluded.icon_content_type,
+                icon_bytes = excluded.icon_bytes,
+                short_description = excluded.short_description,
+                long_description = excluded.long_description,
+                scraped_at = excluded.scraped_at
+            """,
+            [
+                (
+                    record.metadata.package_name,
+                    record.metadata.store,
+                    record.metadata.source_url,
+                    record.metadata.icon_url,
+                    record.icon_content_type,
+                    record.icon_bytes,
+                    record.metadata.short_description,
+                    record.metadata.long_description,
+                    record.scraped_at,
+                )
+                for record in records
+            ],
+        )
+        conn.commit()
+
+
 def parse_metadata(
     package_name: str,
     store: StoreId,
@@ -193,14 +356,17 @@ def parse_metadata(
     icon_url = first_non_empty(
         meta_content(parser.meta_tags, property_name="og:image"),
         meta_content(parser.meta_tags, name="twitter:image"),
-        software_application_value(parser.json_ld_blocks, "image"),
     )
+    if not icon_url:
+        icon_url = software_application_value(parser.json_ld_blocks, "image")
+
     short_description = first_non_empty(
         meta_content(parser.meta_tags, property_name="og:description"),
         meta_content(parser.meta_tags, name="description"),
         meta_content(parser.meta_tags, name="twitter:description"),
-        software_application_value(parser.json_ld_blocks, "description"),
     )
+    if not short_description:
+        short_description = software_application_value(parser.json_ld_blocks, "description")
 
     if not icon_url:
         raise AppStoreScrapeError(f"{store} page did not expose an icon URL for {package_name}.")
@@ -209,12 +375,15 @@ def parse_metadata(
             f"{store} page did not expose a short description for {package_name}.",
         )
 
+    long_description = extract_long_description(html_text, store, short_description)
+
     return AppStoreMetadata(
         package_name=package_name,
         store=store,
         source_url=source_url,
         icon_url=icon_url,
         short_description=short_description,
+        long_description=long_description,
     )
 
 
@@ -277,6 +446,49 @@ def clean_text(value: str) -> str:
     return " ".join(value.split())
 
 
+def clean_long_text(value: str) -> str:
+    lines = [" ".join(line.split()) for line in value.splitlines()]
+    return "\n".join(line for line in lines if line)
+
+
+def fragment_to_text(fragment: str) -> str:
+    parser = FragmentTextParser()
+    parser.feed(html.unescape(fragment))
+    return parser.text()
+
+
+def extract_long_description(
+    html_text: str,
+    store: StoreId,
+    short_description: str,
+) -> str | None:
+    if store == "google-play":
+        match = re.search(
+            r'<div class="bARER" data-g-id="description">(.*?)</div><div class="TKjAsc">',
+            html_text,
+            flags=re.DOTALL,
+        )
+    else:
+        match = re.search(
+            r'<div class="description-wrapper">(.*?)</div></section><div class="left-section banner-wrapper"',
+            html_text,
+            flags=re.DOTALL,
+        )
+
+    if not match:
+        return None
+
+    fragment = match.group(1)
+    fragment = re.sub(r'<div class="video-wrapper".*?</div>', " ", fragment, flags=re.DOTALL)
+    if store == "myket":
+        fragment = fragment.split('<p class="faq-header">', 1)[0]
+
+    long_description = fragment_to_text(fragment)
+    if len(long_description) <= len(short_description) + 40:
+        return None
+    return long_description
+
+
 def scrape_package(
     package_name: str,
     store: StoreId,
@@ -292,7 +504,10 @@ def render_output(store: StoreId, records: list[AppStoreMetadata]) -> str:
     payload = {
         "generatedAt": datetime.now(UTC).isoformat(timespec="seconds"),
         "store": store,
-        "apps": [asdict(record) for record in records],
+        "apps": [
+            {key: value for key, value in asdict(record).items() if value is not None}
+            for record in records
+        ],
     }
     return json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
 
@@ -301,21 +516,43 @@ def main() -> None:
     args = parse_args()
 
     records: list[AppStoreMetadata] = []
+    stored_records: list[StoredAppStoreMetadata] = []
+    scraped_at = datetime.now(UTC).isoformat(timespec="seconds")
     for index, package_name in enumerate(args.packages):
         if index > 0 and args.delay_seconds > 0:
             time.sleep(args.delay_seconds)
-        records.append(
-            scrape_package(
-                package_name=package_name,
-                store=args.store,
-                timeout_seconds=args.timeout_seconds,
-                user_agent=args.user_agent,
-            ),
+        record = scrape_package(
+            package_name=package_name,
+            store=args.store,
+            timeout_seconds=args.timeout_seconds,
+            user_agent=args.user_agent,
         )
+        stored_record = None
+        if args.db_path is not None:
+            stored_record = build_stored_metadata(
+                record,
+                args.timeout_seconds,
+                args.user_agent,
+                scraped_at,
+            )
+            stored_records.append(stored_record)
+
+        if args.embed_icons and stored_record is not None:
+            encoded_icon = base64.b64encode(stored_record.icon_bytes).decode("ascii")
+            record = replace(
+                record,
+                icon_url=f"data:{stored_record.icon_content_type};base64,{encoded_icon}",
+            )
+        elif args.embed_icons:
+            record = embed_icon(record, args.timeout_seconds, args.user_agent)
+        records.append(record)
 
     args.output_path.parent.mkdir(parents=True, exist_ok=True)
     args.output_path.write_text(render_output(args.store, records), encoding="utf-8")
     print(f"Wrote {len(records)} app metadata records to {args.output_path}")
+    if args.db_path is not None:
+        store_metadata_records(args.db_path, stored_records)
+        print(f"Stored {len(stored_records)} app metadata records in {args.db_path}")
 
 
 if __name__ == "__main__":

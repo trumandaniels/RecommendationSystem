@@ -1,4 +1,5 @@
 import argparse
+import base64
 import html
 import json
 import re
@@ -12,6 +13,7 @@ DEFAULT_DB_PATH = Path("data/myket.db")
 DEFAULT_OUTPUT_PATH = Path("frontend/src/app/demoData.generated.ts")
 HISTORY_LIMIT = 6
 RECOMMENDATION_LIMIT = 5
+AppStoreMetadata = dict[str, dict[str, str]]
 GENERIC_PACKAGE_PARTS = {
     "android",
     "app",
@@ -53,10 +55,46 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_OUTPUT_PATH,
         help=f"TypeScript output path. Default: {DEFAULT_OUTPUT_PATH}",
     )
+    parser.add_argument(
+        "--app-store-metadata-path",
+        type=Path,
+        help=(
+            "Optional JSON from scripts/scrape_app_store_metadata.py. When provided, every "
+            "exported app must have icon_url and short_description metadata."
+        ),
+    )
+    parser.add_argument(
+        "--app-store-metadata-db-path",
+        type=Path,
+        help=(
+            "Optional SQLite database containing app_store_metadata rows from "
+            "scripts/scrape_app_store_metadata.py. When provided, every exported app must have "
+            "stored icon bytes and description metadata."
+        ),
+    )
+    parser.add_argument(
+        "--allow-synthetic-placeholders",
+        action="store_true",
+        help=(
+            "Allow synthetic icons/descriptions for exported apps missing from the app-store "
+            "metadata file."
+        ),
+    )
     args = parser.parse_args()
 
     if not args.db_path.exists():
         raise FileNotFoundError(f"SQLite database not found: {args.db_path}")
+    if args.app_store_metadata_path is not None and not args.app_store_metadata_path.exists():
+        raise FileNotFoundError(f"App store metadata not found: {args.app_store_metadata_path}")
+    if (
+        args.app_store_metadata_db_path is not None
+        and not args.app_store_metadata_db_path.exists()
+    ):
+        raise FileNotFoundError(
+            f"App store metadata SQLite database not found: {args.app_store_metadata_db_path}",
+        )
+    if args.app_store_metadata_path is not None and args.app_store_metadata_db_path is not None:
+        raise ValueError("Use either --app-store-metadata-path or --app-store-metadata-db-path, not both.")
 
     return args
 
@@ -157,6 +195,134 @@ def fetch_app_metadata(conn: sqlite3.Connection, app_names: list[str]) -> dict[s
         app_names,
     )
     return {str(row["app_name"]): dict(row) for row in rows}
+
+
+def load_app_store_metadata_from_json(
+    path: Path | None,
+    app_names: list[str],
+    allow_synthetic_placeholders: bool,
+) -> tuple[AppStoreMetadata, list[str]]:
+    if path is None:
+        return {}, []
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"App store metadata must be a JSON object: {path}")
+
+    apps = payload.get("apps")
+    if not isinstance(apps, list):
+        raise ValueError(f"App store metadata must include an apps list: {path}")
+
+    parsed: AppStoreMetadata = {}
+    for index, app_payload in enumerate(apps):
+        if not isinstance(app_payload, dict):
+            raise ValueError(f"App store metadata apps[{index}] must be an object.")
+
+        package_name = require_string(app_payload, "package_name", index)
+        parsed[package_name] = {
+            "icon_url": require_string(app_payload, "icon_url", index),
+            "short_description": require_string(app_payload, "short_description", index),
+            "source_url": require_string(app_payload, "source_url", index),
+            "store": require_string(app_payload, "store", index),
+        }
+        long_description = app_payload.get("long_description")
+        if isinstance(long_description, str) and long_description.strip():
+            parsed[package_name]["long_description"] = long_description.strip()
+
+    missing = [app_name for app_name in app_names if app_name not in parsed]
+    if missing and not allow_synthetic_placeholders:
+        raise ValueError(
+            "App store metadata is missing exported apps: "
+            + ", ".join(sorted(missing)),
+        )
+
+    return parsed, missing
+
+
+def load_app_store_metadata_from_db(
+    path: Path | None,
+    app_names: list[str],
+    allow_synthetic_placeholders: bool,
+) -> tuple[AppStoreMetadata, list[str]]:
+    if path is None:
+        return {}, []
+    if not app_names:
+        return {}, []
+
+    placeholders = ", ".join("?" for _ in app_names)
+    with sqlite3.connect(path) as conn:
+        conn.row_factory = sqlite3.Row
+        table_exists = fetch_rows(
+            conn,
+            """
+            SELECT name
+            FROM sqlite_master
+            WHERE type = 'table'
+              AND name = 'app_store_metadata'
+            """,
+        )
+        if not table_exists:
+            raise ValueError(f"SQLite database does not contain app_store_metadata: {path}")
+
+        rows = fetch_rows(
+            conn,
+            f"""
+            SELECT
+                app_name,
+                store,
+                source_url,
+                icon_url,
+                icon_content_type,
+                icon_bytes,
+                short_description,
+                long_description
+            FROM app_store_metadata
+            WHERE app_name IN ({placeholders})
+            """,
+            app_names,
+        )
+
+    parsed: AppStoreMetadata = {}
+    for row in rows:
+        app_name = require_db_string(row, "app_name")
+        content_type = require_db_string(row, "icon_content_type")
+        icon_bytes = row["icon_bytes"]
+        if not isinstance(icon_bytes, bytes) or not icon_bytes:
+            raise ValueError(f"app_store_metadata.icon_bytes must be non-empty for {app_name}.")
+
+        parsed[app_name] = {
+            "icon_url": f"data:{content_type};base64,{base64.b64encode(icon_bytes).decode('ascii')}",
+            "short_description": require_db_string(row, "short_description"),
+            "source_url": require_db_string(row, "source_url"),
+            "store": require_db_string(row, "store"),
+        }
+        long_description = row["long_description"]
+        if isinstance(long_description, str) and long_description.strip():
+            parsed[app_name]["long_description"] = long_description.strip()
+
+    missing = [app_name for app_name in app_names if app_name not in parsed]
+    if missing and not allow_synthetic_placeholders:
+        raise ValueError(
+            "SQLite app store metadata is missing exported apps: "
+            + ", ".join(sorted(missing)),
+        )
+
+    return parsed, missing
+
+
+def require_db_string(row: sqlite3.Row, key: str) -> str:
+    value = row[key]
+    if not isinstance(value, str) or not value.strip():
+        app_name = row["app_name"] if "app_name" in row.keys() else "unknown app"
+        raise ValueError(f"app_store_metadata.{key} must be non-empty for {app_name}.")
+    return value.strip()
+
+
+def require_string(payload: dict[str, object], key: str, index: int) -> str:
+    value = payload.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"App store metadata apps[{index}].{key} must be a non-empty string.")
+    return value.strip()
 
 
 def fetch_popularity_candidates(conn: sqlite3.Connection, excluded_apps: list[str]) -> list[dict[str, object]]:
@@ -304,10 +470,46 @@ def build_app_image(app_name: str, category: str | None, rating: float | None) -
     return f"data:image/svg+xml,{quote(svg)}"
 
 
+def app_image(
+    app_name: str,
+    category: str | None,
+    rating: float | None,
+    app_store_metadata: AppStoreMetadata,
+) -> str:
+    if app_name in app_store_metadata and app_store_metadata[app_name]["icon_url"].startswith("data:"):
+        return app_store_metadata[app_name]["icon_url"]
+    return build_app_image(app_name, category, rating)
+
+
+def app_description(
+    app_name: str,
+    category: str,
+    installs: float | None,
+    interaction_count: int,
+    app_store_metadata: AppStoreMetadata,
+) -> str:
+    if app_name in app_store_metadata:
+        metadata = app_store_metadata[app_name]
+        return metadata.get("long_description", metadata["short_description"])
+    return ""
+
+
+def app_store_facts(app_name: str, app_store_metadata: AppStoreMetadata) -> list[dict[str, str]]:
+    if app_name not in app_store_metadata:
+        return []
+
+    source = app_store_metadata[app_name]
+    return [
+        {"label": "Presentation source", "value": source["store"]},
+        {"label": "Store page", "value": source["source_url"]},
+    ]
+
+
 def build_app_detail(
     meta: dict[str, object],
     interaction_count: int,
     history_role: str,
+    app_store_metadata: AppStoreMetadata,
 ) -> dict[str, object]:
     app_name = str(meta["app_name"])
     title = app_title(app_name)
@@ -319,15 +521,8 @@ def build_app_detail(
         "id": app_name,
         "title": title,
         "category": category,
-        "image": build_app_image(app_name, category, rating),
-        "subtitle": (
-            f"Package {app_name} appears in {category} with a {format_rating(rating)} average rating."
-        ),
-        "description": (
-            f"Myket records this app as {category}. The local interaction sample includes "
-            f"{format_count(interaction_count)} install events for this package, while the app metadata "
-            f"reports approximately {format_count(installs)} store installs."
-        ),
+        "image": app_image(app_name, category, rating, app_store_metadata),
+        "description": app_description(app_name, category, installs, interaction_count, app_store_metadata),
         "attributes": [
             app_name,
             category,
@@ -339,11 +534,16 @@ def build_app_detail(
             {"label": "Store installs", "value": format_count(installs)},
             {"label": "Rating count", "value": format_count(rating_count)},
             {"label": "History role", "value": history_role},
-        ],
+        ]
+        + app_store_facts(app_name, app_store_metadata),
     }
 
 
-def build_history_entry(meta: dict[str, object], timestamp: float) -> dict[str, object]:
+def build_history_entry(
+    meta: dict[str, object],
+    timestamp: float,
+    app_store_metadata: AppStoreMetadata,
+) -> dict[str, object]:
     app_name = str(meta["app_name"])
     category = str(meta["category_en"]) if meta["category_en"] is not None else "Unknown category"
     rating = float(meta["rating"]) if meta["rating"] is not None else None
@@ -352,7 +552,7 @@ def build_history_entry(meta: dict[str, object], timestamp: float) -> dict[str, 
         "title": app_title(app_name),
         "category": category,
         "time": format_timestamp(timestamp),
-        "image": build_app_image(app_name, category, rating),
+        "image": app_image(app_name, category, rating, app_store_metadata),
     }
 
 
@@ -360,6 +560,7 @@ def build_popularity_recommendations(
     candidates: list[dict[str, object]],
     app_metadata: dict[str, dict[str, object]],
     history_categories: set[str],
+    app_store_metadata: AppStoreMetadata,
 ) -> list[dict[str, object]]:
     top_count = max(int(candidate["install_interactions"]) for candidate in candidates)
     recommendations: list[dict[str, object]] = []
@@ -380,7 +581,7 @@ def build_popularity_recommendations(
             {
                 "id": app_name,
                 "title": app_title(app_name),
-                "image": build_app_image(app_name, category, rating),
+                "image": app_image(app_name, category, rating, app_store_metadata),
                 "explanation": (
                     f"Installed {format_count(install_interactions)} times in the Myket sample. "
                     f"Metadata places it in {category or 'Unknown category'} with "
@@ -417,6 +618,7 @@ def build_item_item_recommendations(
     app_metadata: dict[str, dict[str, object]],
     history_categories: set[str],
     history_size: int,
+    app_store_metadata: AppStoreMetadata,
 ) -> list[dict[str, object]]:
     top_co_users = max(int(candidate["co_users"]) for candidate in candidates)
     recommendations: list[dict[str, object]] = []
@@ -442,7 +644,7 @@ def build_item_item_recommendations(
             {
                 "id": app_name,
                 "title": app_title(app_name),
-                "image": build_app_image(app_name, category, rating),
+                "image": app_image(app_name, category, rating, app_store_metadata),
                 "explanation": (
                     f"Installed by {format_count(co_users)} users who also installed apps from this "
                     f"user's history, matching {matched_seed_apps} of the {history_size} seed apps."
@@ -524,13 +726,29 @@ def main() -> None:
         app_metadata = fetch_app_metadata(conn, all_app_names)
         interaction_counts = fetch_interaction_counts(conn, all_app_names)
 
+    if args.app_store_metadata_db_path is not None:
+        app_store_metadata, synthetic_placeholder_apps = load_app_store_metadata_from_db(
+            args.app_store_metadata_db_path,
+            all_app_names,
+            args.allow_synthetic_placeholders,
+        )
+    else:
+        app_store_metadata, synthetic_placeholder_apps = load_app_store_metadata_from_json(
+            args.app_store_metadata_path,
+            all_app_names,
+            args.allow_synthetic_placeholders,
+        )
     history_categories = {
         str(app_metadata[app_name]["category_en"])
         for app_name in history_app_names
         if app_metadata[app_name]["category_en"] is not None
     }
     history = [
-        build_history_entry(app_metadata[str(row["app_name"])], float(row["timestamp"]))
+        build_history_entry(
+            app_metadata[str(row["app_name"])],
+            float(row["timestamp"]),
+            app_store_metadata,
+        )
         for row in history_rows
     ]
 
@@ -540,6 +758,7 @@ def main() -> None:
             app_metadata[app_name],
             interaction_counts.get(app_name, 0),
             history_role=f"User install {index} of {len(history_app_names)}",
+            app_store_metadata=app_store_metadata,
         )
 
     for app_name in candidate_app_names:
@@ -549,6 +768,7 @@ def main() -> None:
             app_metadata[app_name],
             interaction_counts.get(app_name, 0),
             history_role="Recommended candidate",
+            app_store_metadata=app_store_metadata,
         )
 
     recommendations = {
@@ -556,12 +776,14 @@ def main() -> None:
             popularity_candidates,
             app_metadata,
             history_categories,
+            app_store_metadata,
         ),
         "item_item": build_item_item_recommendations(
             item_item_candidates,
             app_metadata,
             history_categories,
             len(history_app_names),
+            app_store_metadata,
         ),
     }
 
@@ -570,10 +792,18 @@ def main() -> None:
             "datasetLabel": "Myket Android app install interactions",
             "sessionId": user_id,
             "historyAppCount": len(history_app_names),
+            "syntheticPlaceholderAppCount": len(synthetic_placeholder_apps),
             "note": (
-                "This demo uses anonymized user-app install events from Myket. App cards are derived "
-                "from package name, category, install-count, and rating metadata because the dataset "
-                "does not include app icons or marketing screenshots."
+                "This demo uses anonymized user-app install events from Myket. App ranking evidence "
+                "comes from the local interaction dataset. Public app-store metadata supplies app "
+                "descriptions where available. Icons are embedded when available; otherwise the demo "
+                "uses deterministic dataset-backed icon tiles so the presentation remains self-contained."
+                if app_store_metadata
+                else (
+                    "This demo uses anonymized user-app install events from Myket. App cards are derived "
+                    "from package name, category, install-count, and rating metadata because the dataset "
+                    "does not include app icons or marketing screenshots."
+                )
             ),
         },
         "HISTORY": history,
@@ -632,6 +862,8 @@ def main() -> None:
     print(f"Selected user: {user_id}")
     print(f"Install-history apps: {len(history_app_names)}")
     print(f"History categories: {', '.join(sorted(history_categories))}")
+    if synthetic_placeholder_apps:
+        print(f"Synthetic placeholders: {', '.join(sorted(synthetic_placeholder_apps))}")
     print(f"Wrote frontend data: {args.output_path}")
 
 
