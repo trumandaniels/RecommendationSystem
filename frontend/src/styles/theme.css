@@ -2,6 +2,8 @@
 
 :root {
   --font-size: 16px;
+  --font-sans: var(--app-font-sans);
+  --default-font-family: var(--app-font-sans);
   --background: #ffffff;
   --foreground: oklch(0.145 0 0);
   --card: #ffffff;

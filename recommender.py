@@ -20,6 +20,14 @@ Inference: For a selected user's history, rank candidate apps by the number of
 users who installed both the candidate and one or more seed apps from that
 history.
 
+Semantic text similarity:
+
+Offline or client-side: Embed each app's name and description with a compact
+text model. The current hosted demo uses a small deterministic n-gram embedding
+so it stays static-hostable without downloading a large transformer bundle.
+Inference: Use the currently selected app as the query vector, then rank every
+other store app by cosine similarity to that app's name-and-description vector.
+
 PyTorch matrix factorization:
 
 Offline: Train user and app embeddings from the implicit user-app interaction

@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 frontend/node_modules/
 frontend/dist/
+frontend/public/generated-app-icons/
 
 # Local-only AI scaffolding
 AGENTS.md
