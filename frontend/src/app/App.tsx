@@ -1967,41 +1967,6 @@ function ModelPage() {
         </article>
       </div>
 
-      <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <article className="rounded-lg border border-white/75 bg-white/90 p-5 shadow-[0_16px_38px_rgba(15,23,42,0.07)] ring-1 ring-blue-950/[0.03]">
-          <h3 className="text-base font-semibold text-slate-950">How the score is presented</h3>
-          <div className="mt-4 grid gap-3">
-            {[
-              "Each mode produces a ranked candidate list from the exported full catalog, user-app install index, or selected-app text embeddings.",
-              "Raw counts are normalized to 0-100 signal values so different kinds of evidence can be shown on one UI scale.",
-              "The dashboard converts those signals into a 0.00-1.00 model-specific display score for readability. Popularity is a normalized install-volume score, while personalized modes are relative recommendation scores.",
-              "Installed apps are filtered out before display so recommendations stay actionable.",
-            ].map((item, index) => (
-              <div key={item} className="flex gap-3 rounded-lg bg-[#f3f8ff] p-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-blue-600 text-xs font-semibold text-white">
-                  {index + 1}
-                </span>
-                <p className="text-sm leading-6 text-slate-600">{item}</p>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <article className="rounded-lg border border-blue-100/80 bg-[linear-gradient(180deg,rgba(239,246,255,0.94),rgba(255,255,255,0.82))] p-5 shadow-[0_16px_38px_rgba(37,99,235,0.08)] ring-1 ring-white/70">
-          <h3 className="text-base font-semibold text-slate-950">ML engineering read</h3>
-          <p className="mt-3 text-sm leading-6 text-slate-700">
-            The current system is deliberately transparent: it favors ranking quality that can be
-            inspected over opaque modeling. The semantic tab keeps that spirit by using a small
-            local embedding path first; a later hosted model could swap in MiniLM, ONNX, or another
-            compact transformer if the extra asset size is worth it.
-          </p>
-          <p className="mt-3 text-sm leading-6 text-slate-700">
-            For non-technical readers: one model looks for patterns in what people install
-            together, while the semantic model looks for apps that talk like the current app.
-            The two signals answer different questions and are useful to compare side by side.
-          </p>
-        </article>
-      </div>
     </section>
   );
 }
