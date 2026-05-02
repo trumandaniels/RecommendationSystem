@@ -315,8 +315,8 @@ const MODE_DETAILS: Record<
     description: "Ranks apps by total install interactions in the Myket sample.",
   },
   item_item: {
-    label: "ML recommendation",
-    shortLabel: "ML",
+    label: "Item-Item",
+    shortLabel: "Item-Item",
     eyebrow: "Co-install graph",
     description: "Ranks apps by overlap with users who installed the profile's apps.",
   },
@@ -1034,8 +1034,8 @@ function ModeSelector({
 }) {
   const options: Array<{ id: ModelId; icon: typeof TrendingUp }> = [
     { id: "popularity", icon: TrendingUp },
-    { id: "item_item", icon: BrainCircuit },
     { id: "semantic", icon: Sparkles },
+    { id: "item_item", icon: BrainCircuit },
   ];
 
   return (
@@ -1427,10 +1427,8 @@ function RecommendationPanel({
     <aside className={cn(PANEL_CLASS, "flex min-h-0 min-w-0 flex-col")}>
       <div className="border-b border-[#dbe7f5] px-6 py-5">
         <div>
-          <div>
-            <h2 className="text-base font-semibold text-slate-950">Recommendations</h2>
-            <p className="mt-1 text-sm text-slate-500">Apps we think you'll like</p>
-          </div>
+          <h2 className="text-base font-semibold text-slate-950">Recommendations</h2>
+          <p className="mt-1 text-sm text-slate-500">Apps we think you'll like</p>
         </div>
         <div className="mt-4">
           <ModeSelector activeModel={activeModel} onChange={onModeChange} />
@@ -1896,8 +1894,8 @@ function ModelPage() {
         The current dashboard compares three production-friendly ranking strategies: a popularity
         baseline, item-item collaborative filtering over the install graph, and a compact semantic
         model over app names and descriptions. Put simply: the first asks "what is popular
-        overall?", the second asks "what do similar app histories install?", and the third asks
-        "what apps describe similar jobs, formats, and interests?"
+        overall?", the second asks "what do users with similar app histories install?", and the
+        third asks "what apps describe similar jobs, formats, and interests?"
       </p>
 
       <div className="mt-6 grid gap-5 xl:grid-cols-3">
@@ -2030,7 +2028,9 @@ export default function App() {
     () => buildSearchRecommendations(searchQuery, installedIdSet),
     [searchQuery, installedIdSet],
   );
-  const recommendations = searchQuery.trim() ? searchRecommendations : modelRecommendations;
+  const recommendations = (searchQuery.trim() ? searchRecommendations : modelRecommendations).filter(
+    (recommendation) => recommendation.id !== selectedAppId,
+  );
   const recommendationMap = useMemo(
     () => new Map(modelRecommendations.map((recommendation) => [recommendation.id, recommendation])),
     [modelRecommendations],
